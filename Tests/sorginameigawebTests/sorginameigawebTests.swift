@@ -55,4 +55,44 @@ struct sorginameigawebTests {
             #expect(Set(seed.dogs.map(\.sex)) == ["macho", "hembra"])
         }
     }
+
+    // The following are integration tests that require the local Postgres
+    // (docker compose up -d db) seeded via `migrate --yes`.
+
+    @Test("Dog listings render filtered by sex")
+    func dogListings() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "machos", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Machos"))
+                #expect(res.body.string.contains("/perro/27"))
+            })
+            try await app.testing().test(.GET, "en/females", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Females"))
+                #expect(res.body.string.contains("/en/dog/"))
+            })
+        }
+    }
+
+    @Test("Dog detail renders pedigree and back link")
+    func dogDetail() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "perro/27", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("SUNTORY ADONIS"))
+                #expect(res.body.string.contains("nombrepedigree"))
+                #expect(res.body.string.contains("/machos")) // back link
+            })
+        }
+    }
+
+    @Test("Unknown dog id returns 404")
+    func unknownDog() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "perro/999999", afterResponse: { res async in
+                #expect(res.status == .notFound)
+            })
+        }
+    }
 }

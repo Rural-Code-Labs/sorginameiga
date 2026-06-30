@@ -1,15 +1,15 @@
 <header>
     <div id="cabecera">
-        <div id="titulo">#(t.title)</div>
+        <div id="titulo">#(layout.t.title)</div>
         <div id="bajo_titulo">
             www.SorginaMeiga.com
-            <a href="#(spanishURL)"><img id="esp" src="/images/esp.jpg"></a>
-            <a href="#(englishURL)"><img id="ing" src="/images/ing.jpg"></a>
+            <a href="#(layout.spanishURL)"><img id="esp" src="/images/esp.jpg"></a>
+            <a href="#(layout.englishURL)"><img id="ing" src="/images/ing.jpg"></a>
         </div>
         <div id="menu">
             <nav>
                 <ul>
-                    #for(item in menu):
+                    #for(item in layout.menu):
                     <li><a href="#(item.url)">#(item.label)</a></li>
                     #endfor
                 </ul>

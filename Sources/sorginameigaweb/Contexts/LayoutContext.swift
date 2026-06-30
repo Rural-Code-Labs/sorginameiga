@@ -4,16 +4,17 @@ struct MenuItem: Encodable {
     let url: String
 }
 
-/// View context shared by the layout and the home page.
+/// Context shared by every page through the Leaf layout (`base` + partials).
 ///
-/// Carries everything the Leaf templates need: the current language, the
-/// language-switcher targets, the localized menu and the translated strings.
-struct PageContext: Encodable {
+/// Carries the current language, the language-switcher targets (which preserve
+/// the current page), the localized menu, the footer visit count and the
+/// translated strings. Each page context embeds one of these as `layout`.
+struct LayoutContext: Encodable {
     /// Value for the HTML `lang` attribute ("es" / "en").
     let lang: String
-    /// Home URL of the Spanish site (target of the "esp" flag).
+    /// URL of the current page in Spanish (target of the "esp" flag).
     let spanishURL: String
-    /// Home URL of the English site (target of the "ing" flag).
+    /// URL of the current page in English (target of the "ing" flag).
     let englishURL: String
     /// Localized navigation menu.
     let menu: [MenuItem]

@@ -1,0 +1,17 @@
+#extend("base"):
+#export("content"):
+<div id="cuerpo_perros">
+    <div id="titulosexo">#(title)</div>
+    <div id="tablaperros">
+        #for(dog in dogs):
+        <div class="cuadroperro">
+            <a href="#(dog.url)">
+                <img class="foto_listado" src="#(dog.photo)" alt="#(dog.name)"><br />
+            </a>
+            #(dog.name)
+        </div>
+        #endfor
+    </div>
+</div>
+#endexport
+#endextend

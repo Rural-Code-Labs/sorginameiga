@@ -1,7 +1,7 @@
 #extend("base"):
 #export("content"):
 <div id="cuerpo_index">
-    <div id="texto_presentacion">#unsafeHTML(t.presentation)</div>
+    <div id="texto_presentacion">#unsafeHTML(layout.t.presentation)</div>
     <div id="foto_presentacion">
         <img src="/images/fotopresentacion.jpg">
     </div>

@@ -1,0 +1,63 @@
+#extend("base"):
+#export("content"):
+<div id="cuerpo_perros">
+    <div id="titulo_perro">#(name)</div>
+
+    <div id="ficha_perro">
+        <div id="fotos_perro">
+            #for(photo in photos):
+            #if(isFirst):
+            <a href="#(photo)" target="_blank">
+                <img id="foto_perro_principal" src="#(photo)" alt="#(name)">
+            </a>
+            #endif
+            #endfor
+            <div id="fotos_extra">
+                #for(photo in photos):
+                #if(!isFirst):
+                <a href="#(photo)" target="_blank">
+                    <img class="foto_perro_thumb" src="#(photo)" alt="#(name)">
+                </a>
+                #endif
+                #endfor
+            </div>
+        </div>
+
+        <table id="tablapedigree">
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.aaa)</div></td>
+                <td class="ped ped2" rowspan="2"><div class="nombrepedigree">#(pedigree.aa)</div></td>
+                <td class="ped ped1" rowspan="4"><div class="nombrepedigree">#(pedigree.a)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.aab)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.aba)</div></td>
+                <td class="ped ped2" rowspan="2"><div class="nombrepedigree">#(pedigree.ab)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.abb)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.baa)</div></td>
+                <td class="ped ped2" rowspan="2"><div class="nombrepedigree">#(pedigree.ba)</div></td>
+                <td class="ped ped1" rowspan="4"><div class="nombrepedigree">#(pedigree.b)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.bab)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.bba)</div></td>
+                <td class="ped ped2" rowspan="2"><div class="nombrepedigree">#(pedigree.bb)</div></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><div class="nombrepedigree">#(pedigree.bbb)</div></td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="botonvolver"><a href="#(backURL)">#(layout.t.back)</a></div>
+</div>
+#endexport
+#endextend
