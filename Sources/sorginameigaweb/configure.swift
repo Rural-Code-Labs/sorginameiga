@@ -49,6 +49,9 @@ func configure(_ app: Application) async throws {
 
     app.views.use(.leaf)
 
+    // CLI: set/rotate the admin password (used after the placeholder seed).
+    app.asyncCommands.use(AdminPasswordCommand(), as: "admin-password")
+
     // Register routes.
     try routes(app)
 }
