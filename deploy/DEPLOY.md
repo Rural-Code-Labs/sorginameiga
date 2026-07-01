@@ -14,7 +14,10 @@ gcloud config set project "$PROJECT_ID"
 
 ---
 
-## 8c — Images bucket (GCS)
+> **Status:** Project `sorgina-meiga` (nº 681872954393), billing on. Bucket
+> `gs://sorginameiga-images` created in `europe-west3` and seeded (91 objects).
+
+## 8c — Images bucket (GCS) ✅ DONE
 
 The app reads and writes entity photos on the local filesystem under
 `Public/images`. On Cloud Run that path is backed by a **GCS bucket mounted as a
