@@ -1,0 +1,24 @@
+#extend("base"):
+#export("content"):
+<div id="cuerpo_perros">
+    <div id="titulosexo">#(title)</div>
+
+    #if(count(blocks) == 0):
+    <p id="mensaje_vacio">#(emptyMessage)</p>
+    #else:
+    #for(block in blocks):
+    <div class="bloque_media">
+        <div class="titulo_media">#(block.title)#if(block.badge): <span class="badge">[#(block.badge)]</span>#endif</div>
+        <div class="galeria_fotos">
+            #for(photo in block.photos):
+            <a href="#(photo)" target="_blank">
+                <img class="foto_galeria" src="#(photo)" alt="#(block.title)">
+            </a>
+            #endfor
+        </div>
+    </div>
+    #endfor
+    #endif
+</div>
+#endexport
+#endextend

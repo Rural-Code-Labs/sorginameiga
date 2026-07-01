@@ -273,3 +273,41 @@ body{
 #botonvolver{
 	margin-top: 30px;
 }
+
+/* ===== Fase 4: Galerías y cachorros ===== */
+
+.bloque_media{
+	margin-bottom: 35px;
+}
+
+.titulo_media{
+	font-size: 22px;
+	font-style: italic;
+	margin-bottom: 12px;
+	border-bottom: 1px solid #FFF;
+	padding-bottom: 4px;
+}
+
+.titulo_media .badge{
+	font-size: 15px;
+	font-style: normal;
+}
+
+.galeria_fotos{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.foto_galeria{
+	width: 150px;
+	height: 150px;
+	object-fit: cover;
+	border: 3px solid #333;
+}
+
+#mensaje_vacio{
+	text-align: center;
+	font-size: 20px;
+	padding: 40px 0;
+}

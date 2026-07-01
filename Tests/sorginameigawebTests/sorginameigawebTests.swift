@@ -95,4 +95,30 @@ struct sorginameigawebTests {
             })
         }
     }
+
+    @Test("Galleries page renders seeded galleries with photos")
+    func galleries() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "galeria", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("PEQUEÑINES"))
+                #expect(res.body.string.contains("/images/galerias/"))
+            })
+            try await app.testing().test(.GET, "en/gallery", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Photo Gallery"))
+            })
+        }
+    }
+
+    @Test("Puppies page shows empty state when there are no puppies")
+    func puppiesEmpty() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "cachorros", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Cachorros"))
+                #expect(res.body.string.contains("No hay cachorros"))
+            })
+        }
+    }
 }

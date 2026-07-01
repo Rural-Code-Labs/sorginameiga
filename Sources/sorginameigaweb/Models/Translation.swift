@@ -32,6 +32,10 @@ struct Translation: Encodable, Sendable {
     let formMessage: String // $F_MENSAJE
     let formSend: String    // $F_ENVIAR
 
+    // Empty-state messages (legacy `error.php` types nocachorros / nogalerias)
+    let noPuppies: String
+    let noGalleries: String
+
     // Home page — contains HTML markup, rendered raw in the template.
     let presentation: String // $PRESENTACION
 }

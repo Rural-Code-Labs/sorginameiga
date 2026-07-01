@@ -33,6 +33,8 @@ final class LocalizationService: Sendable {
             formSubject: "Asunto",
             formMessage: "Mensaje",
             formSend: "Enviar",
+            noPuppies: "No hay cachorros disponibles en este momento.",
+            noGalleries: "No hay galerías disponibles en este momento.",
             presentation: """
             <p>Hola:</p>
             <p>Somos Pilar Díaz y Estíbaliz Domínguez, propietarias del criadero de lhasa apso Sorgiña-Meiga. </p>
@@ -67,6 +69,8 @@ final class LocalizationService: Sendable {
             formSubject: "Subject",
             formMessage: "Message",
             formSend: "Send",
+            noPuppies: "There are no puppies available at the moment.",
+            noGalleries: "There are no galleries available at the moment.",
             presentation: """
             <p>Hello:</p>
             <p>We are Pilar Díaz Y Estíbaliz Domínguez: owners of the Sorgiña-Meiga's lhasa apso kennel.</p>

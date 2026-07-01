@@ -31,3 +31,22 @@ struct DogDetailContext: Encodable {
     /// "Volver" link back to the dog's sex listing.
     let backURL: String
 }
+
+/// A named block with a grid of photos (a gallery, or a puppy litter).
+struct MediaBlock: Encodable {
+    let title: String
+    /// Optional badge shown after the title (e.g. availability for puppies).
+    let badge: String?
+    let photos: [String]
+}
+
+/// Galleries page (`/galeria`, `/en/gallery`) and puppies page
+/// (`/cachorros`, `/en/puppies`): a heading and a list of media blocks.
+struct MediaPageContext: Encodable {
+    let layout: LayoutContext
+    /// Section heading ("Galeria de fotos" / "Cachorros" / …).
+    let title: String
+    let blocks: [MediaBlock]
+    /// Message shown when there are no blocks.
+    let emptyMessage: String
+}

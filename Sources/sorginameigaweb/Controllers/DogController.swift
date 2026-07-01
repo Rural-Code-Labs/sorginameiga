@@ -1,5 +1,4 @@
 import Fluent
-import Foundation
 import Vapor
 
 /// Serves the dog listings (`/machos`, `/hembras`) and the dog detail page
@@ -91,7 +90,7 @@ final class DogController: RouteCollection, Sendable {
             DogDetailContext(
                 layout: layout,
                 name: dog.name,
-                photos: photoURLs(for: id, on: req),
+                photos: PhotoDirectory.photos(in: "images/\(id)", on: req),
                 pedigree: dog.pedigree,
                 backURL: backURL
             )
@@ -110,14 +109,5 @@ final class DogController: RouteCollection, Sendable {
         case .male: return ("/machos", "/en/males")
         case .female: return ("/hembras", "/en/females")
         }
-    }
-
-    /// Discovers which of the dog's photos exist on disk (`0.jpg` … `3.jpg`),
-    /// returning their public URLs. The first is the main photo.
-    private func photoURLs(for id: Int, on req: Request) -> [String] {
-        let dir = req.application.directory.publicDirectory + "images/\(id)/"
-        return (0...3)
-            .filter { FileManager.default.fileExists(atPath: dir + "\($0).jpg") }
-            .map { "/images/\(id)/\($0).jpg" }
     }
 }
