@@ -1,0 +1,19 @@
+#extend("base"):
+#export("content"):
+<div id="cuerpo_perros">
+    <div id="contenedorformulario">
+        <div id="titulosexo">#(title)</div>
+        <div id="contacto">
+            <p id="contacto_texto">#(text)</p>
+            <p><img id="contacto_imagen" src="/images/contacto.jpg" alt="#(title)"></p>
+            <div id="correoytelefono">
+                <p><a href="mailto:#(email)">#(email)</a></p>
+                #for(phone in phones):
+                <p>#(phone)</p>
+                #endfor
+            </div>
+        </div>
+    </div>
+</div>
+#endexport
+#endextend

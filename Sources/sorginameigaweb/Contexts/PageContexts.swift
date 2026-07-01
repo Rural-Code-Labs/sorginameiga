@@ -50,3 +50,14 @@ struct MediaPageContext: Encodable {
     /// Message shown when there are no blocks.
     let emptyMessage: String
 }
+
+/// Contact page (`/contacto`, `/en/contact`): contact details only, matching
+/// the current production site (the legacy form was removed).
+struct ContactContext: Encodable {
+    let layout: LayoutContext
+    let title: String
+    /// Intro text ("write us by email, call us or contact us via WhatsApp").
+    let text: String
+    let email: String
+    let phones: [String]
+}

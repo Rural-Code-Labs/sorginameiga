@@ -121,4 +121,19 @@ struct sorginameigawebTests {
             })
         }
     }
+
+    @Test("Contact page shows contact details in both languages")
+    func contact() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "contacto", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("sorginameiga@hotmail.com"))
+                #expect(res.body.string.contains("696 214 610"))
+            })
+            try await app.testing().test(.GET, "en/contact", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("through WhatsApp"))
+            })
+        }
+    }
 }

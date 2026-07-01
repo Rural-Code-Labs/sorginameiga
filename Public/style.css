@@ -311,3 +311,26 @@ body{
 	font-size: 20px;
 	padding: 40px 0;
 }
+
+/* ===== Fase 5: Contacto ===== */
+
+#contacto{
+	text-align: center;
+	padding-top: 20px;
+}
+
+#contacto_texto{
+	font-size: 18px;
+	max-width: 600px;
+	margin: 0 auto 20px auto;
+}
+
+#contacto_imagen{
+	max-width: 400px;
+	height: auto;
+}
+
+#correoytelefono a{
+	color: #FFF;
+	text-decoration: none;
+}
