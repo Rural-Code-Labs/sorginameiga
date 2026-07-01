@@ -71,6 +71,9 @@ the known problems of the legacy code are deliberately **not** reproduced.
 | `/cachorros` · `/en/puppies` | Puppies with availability |
 | `/galeria` · `/en/gallery` | Photo galleries |
 | `/contacto` · `/en/contact` | Contact details |
+| `/admin/login` · `/admin` | Admin login + dashboard |
+| `/admin/{perros,cachorros,galerias}` | CRUD (protected) |
+| `/admin/fotos/:kind/:id` | Photo management (protected) |
 
 ## Project structure
 
@@ -152,7 +155,7 @@ pick up any recent changes.
 | 3 | Dogs — listings by sex + detail with 4-generation pedigree | ✅ Done |
 | 4 | Puppies + photo galleries | ✅ Done |
 | 5 | Contact page (details only, matching current production) | ✅ Done |
-| 6 | Admin area — CRUD + photo upload, with security fixes (bcrypt, sessions, validated uploads) | ⬜ Planned |
+| 6 | Admin area — CRUD + photo management, with security fixes (bcrypt, sessions, validated uploads) | ✅ Done |
 | 7 | Deployment / cutover — container + managed DB, 301 redirects from legacy URLs | ⬜ Planned |
 
 ## Deployment target

@@ -1,0 +1,23 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>#if(isNew):Nuevo cachorro#else:Editar cachorro#endif</h1>
+
+<form method="post" action="#(action)" class="admin_form">
+    <label>Nombre
+        <input type="text" name="name" value="#(name)" required>
+    </label>
+
+    <label>Disponibilidad
+        <select name="available">
+            <option value="1" #if(available):selected#endif>Disponible</option>
+            <option value="0" #if(!available):selected#endif>No disponible</option>
+        </select>
+    </label>
+
+    <div class="form_actions">
+        <button type="submit" class="admin_button">#if(isNew):Agregar#else:Guardar#endif</button>
+        <a class="admin_button secondary" href="/admin/cachorros">Cancelar</a>
+    </div>
+</form>
+#endexport
+#endextend

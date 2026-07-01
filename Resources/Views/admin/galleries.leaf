@@ -1,0 +1,26 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>Administración de galerías</h1>
+<p><a class="admin_button" href="/admin/galerias/nueva">+ Agregar nueva galería</a></p>
+
+#if(count(galleries) == 0):
+<p>No hay galerías agregadas.</p>
+#else:
+<ul class="admin_list">
+    #for(gallery in galleries):
+    <li>
+        <span class="admin_list_name">#(gallery.name)</span>
+        <span class="admin_list_actions">
+            <a class="admin_button secondary" href="/admin/fotos/galerias/#(gallery.id)">Fotos</a>
+            <a class="admin_button" href="/admin/galerias/#(gallery.id)/editar">Editar</a>
+            <form method="post" action="/admin/galerias/#(gallery.id)/borrar" class="inline_form"
+                  onsubmit="return confirm('¿Borrar la galería #(gallery.name)?');">
+                <button type="submit" class="admin_button danger">Borrar</button>
+            </form>
+        </span>
+    </li>
+    #endfor
+</ul>
+#endif
+#endexport
+#endextend

@@ -1,4 +1,5 @@
 @testable import sorginameigaweb
+import Fluent
 import VaporTesting
 import Testing
 
@@ -133,6 +134,193 @@ struct sorginameigawebTests {
             try await app.testing().test(.GET, "en/contact", afterResponse: { res async in
                 #expect(res.status == .ok)
                 #expect(res.body.string.contains("through WhatsApp"))
+            })
+        }
+    }
+
+    // Admin auth (requires local Postgres migrated; admin password = "changeme").
+
+    @Test("Admin area redirects to login when unauthenticated")
+    func adminRequiresLogin() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "admin", afterResponse: { res async in
+                #expect(res.status == .seeOther)
+                #expect(res.headers.first(name: .location) == "/admin/login")
+            })
+            try await app.testing().test(.GET, "admin/login", afterResponse: { res async in
+                #expect(res.status == .ok)
+            })
+        }
+    }
+
+    @Test("Admin login rejects a wrong password")
+    func adminWrongPassword() async throws {
+        try await withApp { app in
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "wrong"], as: .urlEncodedForm)
+            }, afterResponse: { res async in
+                #expect(res.status == .unauthorized)
+            })
+        }
+    }
+
+    @Test("Admin login grants access to the dashboard")
+    func adminLoginSucceeds() async throws {
+        final class CookieBox: @unchecked Sendable { var cookies: HTTPCookies? }
+        let box = CookieBox()
+        try await withApp { app in
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in
+                #expect(res.status == .seeOther)
+                #expect(res.headers.first(name: .location) == "/admin")
+                box.cookies = res.headers.setCookie
+            })
+            try await app.testing().test(.GET, "admin", beforeRequest: { req in
+                if let cookies = box.cookies { req.headers.cookie = cookies }
+            }, afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Panel de administración"))
+            })
+        }
+    }
+
+    @Test("Admin dog CRUD is protected and creates/deletes a dog")
+    func adminDogCrud() async throws {
+        final class Box: @unchecked Sendable { var cookies: HTTPCookies?; var newID: Int? }
+        let box = Box()
+        try await withApp { app in
+            // Protected without a session.
+            try await app.testing().test(.GET, "admin/perros", afterResponse: { res async in
+                #expect(res.status == .seeOther)
+            })
+            // Log in.
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in box.cookies = res.headers.setCookie })
+
+            let before = try await Dog.query(on: app.db).count()
+
+            // Create.
+            var form = ["name": "TEST CRUD", "sex": "macho"]
+            for key in ["a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"] {
+                form[key] = ""
+            }
+            try await app.testing().test(.POST, "admin/perros", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+                try req.content.encode(form, as: .urlEncodedForm)
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+
+            let created = try await Dog.query(on: app.db).filter(\.$name == "TEST CRUD").first()
+            #expect(created != nil)
+            box.newID = created?.id
+
+            // Delete (cleanup).
+            if let id = box.newID {
+                try await app.testing().test(.POST, "admin/perros/\(id)/borrar", beforeRequest: { req in
+                    if let c = box.cookies { req.headers.cookie = c }
+                }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            }
+            #expect(try await Dog.query(on: app.db).count() == before)
+        }
+    }
+
+    @Test("Admin puppy CRUD creates, updates and deletes a puppy")
+    func adminPuppyCrud() async throws {
+        final class Box: @unchecked Sendable { var cookies: HTTPCookies?; var newID: Int? }
+        let box = Box()
+        try await withApp { app in
+            try await app.testing().test(.GET, "admin/cachorros", afterResponse: { res async in
+                #expect(res.status == .seeOther) // protected
+            })
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in box.cookies = res.headers.setCookie })
+
+            let before = try await Puppy.query(on: app.db).count()
+            try await app.testing().test(.POST, "admin/cachorros", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+                try req.content.encode(["name": "TEST LITTER", "available": "1"], as: .urlEncodedForm)
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+
+            let created = try await Puppy.query(on: app.db).filter(\.$name == "TEST LITTER").first()
+            #expect(created?.available == true)
+            box.newID = created?.id
+
+            if let id = box.newID {
+                try await app.testing().test(.POST, "admin/cachorros/\(id)/borrar", beforeRequest: { req in
+                    if let c = box.cookies { req.headers.cookie = c }
+                }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            }
+            #expect(try await Puppy.query(on: app.db).count() == before)
+        }
+    }
+
+    @Test("Admin gallery CRUD creates and deletes a gallery")
+    func adminGalleryCrud() async throws {
+        final class Box: @unchecked Sendable { var cookies: HTTPCookies?; var newID: Int? }
+        let box = Box()
+        try await withApp { app in
+            try await app.testing().test(.GET, "admin/galerias", afterResponse: { res async in
+                #expect(res.status == .seeOther) // protected
+            })
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in box.cookies = res.headers.setCookie })
+
+            let before = try await Gallery.query(on: app.db).count()
+            try await app.testing().test(.POST, "admin/galerias", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+                try req.content.encode(["name": "TEST GALLERY"], as: .urlEncodedForm)
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+
+            let created = try await Gallery.query(on: app.db).filter(\.$name == "TEST GALLERY").first()
+            #expect(created != nil)
+            box.newID = created?.id
+
+            if let id = box.newID {
+                try await app.testing().test(.POST, "admin/galerias/\(id)/borrar", beforeRequest: { req in
+                    if let c = box.cookies { req.headers.cookie = c }
+                }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            }
+            #expect(try await Gallery.query(on: app.db).count() == before)
+        }
+    }
+
+    @Test("Photo management is protected, renders, and rejects non-JPEG uploads")
+    func adminPhotos() async throws {
+        final class Box: @unchecked Sendable { var cookies: HTTPCookies? }
+        let box = Box()
+        try await withApp { app in
+            // Protected without a session.
+            try await app.testing().test(.GET, "admin/fotos/perros/27", afterResponse: { res async in
+                #expect(res.status == .seeOther)
+            })
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in box.cookies = res.headers.setCookie })
+
+            // Manage page for an existing dog.
+            try await app.testing().test(.GET, "admin/fotos/perros/27", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Subir foto"))
+            })
+
+            // Unknown entity → 404.
+            try await app.testing().test(.GET, "admin/fotos/galerias/999999", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in
+                #expect(res.status == .notFound)
+            })
+
+            // A non-JPEG upload is rejected (and no file is written).
+            try await app.testing().test(.POST, "admin/fotos/galerias/2", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+                try req.content.encode(PhotoUpload(file: File(data: "not a jpeg", filename: "x.jpg")), as: .formData)
+            }, afterResponse: { res async in
+                #expect(res.status == .unprocessableEntity)
             })
         }
     }

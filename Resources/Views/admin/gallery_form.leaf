@@ -1,0 +1,16 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>#if(isNew):Nueva galería#else:Editar galería#endif</h1>
+
+<form method="post" action="#(action)" class="admin_form">
+    <label>Nombre
+        <input type="text" name="name" value="#(name)" required>
+    </label>
+
+    <div class="form_actions">
+        <button type="submit" class="admin_button">#if(isNew):Agregar#else:Guardar#endif</button>
+        <a class="admin_button secondary" href="/admin/galerias">Cancelar</a>
+    </div>
+</form>
+#endexport
+#endextend

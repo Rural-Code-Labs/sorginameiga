@@ -1,0 +1,26 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>Administración de perros</h1>
+<p><a class="admin_button" href="/admin/perros/nuevo">+ Agregar nuevo perro</a></p>
+
+#if(count(dogs) == 0):
+<p>No hay perros agregados.</p>
+#else:
+<ul class="admin_list">
+    #for(dog in dogs):
+    <li>
+        <span class="admin_list_name">#(dog.name)</span>
+        <span class="admin_list_actions">
+            <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos</a>
+            <a class="admin_button" href="/admin/perros/#(dog.id)/editar">Editar</a>
+            <form method="post" action="/admin/perros/#(dog.id)/borrar" class="inline_form"
+                  onsubmit="return confirm('¿Borrar a #(dog.name)?');">
+                <button type="submit" class="admin_button danger">Borrar</button>
+            </form>
+        </span>
+    </li>
+    #endfor
+</ul>
+#endif
+#endexport
+#endextend

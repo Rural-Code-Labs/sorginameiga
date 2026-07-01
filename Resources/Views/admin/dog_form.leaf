@@ -1,0 +1,59 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>#if(isNew):Nuevo perro#else:Editar perro#endif</h1>
+
+<form method="post" action="#(action)" class="admin_form">
+    <label>Nombre
+        <input type="text" name="name" value="#(name)" required>
+    </label>
+
+    <label>Sexo
+        <select name="sex">
+            <option value="macho" #if(sex == "macho"):selected#endif>Macho</option>
+            <option value="hembra" #if(sex == "hembra"):selected#endif>Hembra</option>
+        </select>
+    </label>
+
+    <fieldset class="pedigree_fieldset">
+        <legend>Pedigrí (4 generaciones)</legend>
+        <table id="tablapedigree">
+            <tr>
+                <td class="ped ped3"><input type="text" name="aaa" value="#(pedigree.aaa)"></td>
+                <td class="ped ped2" rowspan="2"><input type="text" name="aa" value="#(pedigree.aa)"></td>
+                <td class="ped ped1" rowspan="4"><input type="text" name="a" value="#(pedigree.a)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="aab" value="#(pedigree.aab)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="aba" value="#(pedigree.aba)"></td>
+                <td class="ped ped2" rowspan="2"><input type="text" name="ab" value="#(pedigree.ab)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="abb" value="#(pedigree.abb)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="baa" value="#(pedigree.baa)"></td>
+                <td class="ped ped2" rowspan="2"><input type="text" name="ba" value="#(pedigree.ba)"></td>
+                <td class="ped ped1" rowspan="4"><input type="text" name="b" value="#(pedigree.b)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="bab" value="#(pedigree.bab)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="bba" value="#(pedigree.bba)"></td>
+                <td class="ped ped2" rowspan="2"><input type="text" name="bb" value="#(pedigree.bb)"></td>
+            </tr>
+            <tr>
+                <td class="ped ped3"><input type="text" name="bbb" value="#(pedigree.bbb)"></td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <div class="form_actions">
+        <button type="submit" class="admin_button">#if(isNew):Agregar#else:Guardar#endif</button>
+        <a class="admin_button secondary" href="/admin/perros">Cancelar</a>
+    </div>
+</form>
+#endexport
+#endextend

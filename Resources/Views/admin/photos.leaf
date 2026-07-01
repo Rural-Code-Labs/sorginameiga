@@ -1,0 +1,34 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>Fotos · #(title)</h1>
+<p><a class="admin_button secondary" href="#(backURL)">← Volver al listado</a></p>
+
+#if(error):
+<p class="login_error">#(error)</p>
+#endif
+
+<form method="post" action="/admin/fotos/#(kind)/#(id)" enctype="multipart/form-data" class="upload_form">
+    <label>Subir foto (JPEG, máx. 10 MB)
+        <input type="file" name="file" accept="image/jpeg" required>
+    </label>
+    <button type="submit" class="admin_button">Subir</button>
+</form>
+
+#if(count(photos) == 0):
+<p>No hay fotos todavía.</p>
+#else:
+<div class="photo_grid">
+    #for(photo in photos):
+    <div class="photo_cell">
+        <img src="#(photo.url)" alt="#(title)">
+        #if(photo.isMain):<span class="photo_main">principal</span>#endif
+        <form method="post" action="/admin/fotos/#(kind)/#(id)/borrar/#(photo.index)"
+              onsubmit="return confirm('¿Borrar esta foto?');">
+            <button type="submit" class="admin_button danger">Borrar</button>
+        </form>
+    </div>
+    #endfor
+</div>
+#endif
+#endexport
+#endextend

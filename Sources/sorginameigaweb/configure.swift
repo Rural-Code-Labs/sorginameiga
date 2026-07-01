@@ -21,9 +21,20 @@ func configure(_ app: Application) async throws {
         tls: .prefer(try .init(configuration: .clientDefault)))
     ), as: .psql)
 
-    // Migrations: schema first, then the legacy data seed.
+    // Sessions, persisted in Postgres so admin logins survive across Cloud Run
+    // instances / restarts.
+    app.sessions.use(.fluent)
+    app.middleware.use(app.sessions.middleware)
+
+    // Migrations: schema + legacy data seed, then sessions and admin.
     app.migrations.add(CreateInitialSchema())
     app.migrations.add(SeedLegacyData(seed: try LegacySeed.load(from: app)))
+    app.migrations.add(SessionRecord.migration)
+    app.migrations.add(CreateAdmin())
+    app.migrations.add(SeedAdmin(
+        username: "Pilar&Estibaliz",
+        password: Environment.get("ADMIN_PASSWORD") ?? "changeme"
+    ))
 
     // Shared, request-independent localization service.
     app.localization = LocalizationService()

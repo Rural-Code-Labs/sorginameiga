@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="/admin.css" type="text/css" rel="stylesheet" />
+        <link rel="shortcut icon" href="/images/favicon.ico" />
+        <title>Administración · Sorgiña Meiga</title>
+    </head>
+    <body>
+        <header id="admin_header">
+            <span id="admin_title"><a href="/admin">Administración Sorgiña-Meiga</a></span>
+            #if(username):
+            <span id="admin_session">
+                <span id="admin_user">#(username)</span>
+                <form method="post" action="/admin/logout" class="logout_form">
+                    <button type="submit">Salir</button>
+                </form>
+            </span>
+            #endif
+        </header>
+        <main id="admin_main">
+            #import("content")
+        </main>
+    </body>
+</html>

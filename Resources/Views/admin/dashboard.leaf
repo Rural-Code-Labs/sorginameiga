@@ -1,0 +1,12 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>Panel de administración</h1>
+<p>Bienvenida, #(username). Gestiona el contenido de la web:</p>
+<nav id="admin_nav">
+    <a href="/admin/perros">Perros</a>
+    <a href="/admin/cachorros">Cachorros</a>
+    <a href="/admin/galerias">Galerías</a>
+</nav>
+<p class="admin_hint">La gestión de fotos se activará en la siguiente fase.</p>
+#endexport
+#endextend

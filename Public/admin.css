@@ -1,0 +1,220 @@
+/* Admin area — a clean, neutral style separate from the public site. */
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f4f6;
+    color: #222;
+}
+
+#admin_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #333;
+    color: #fff;
+    padding: 14px 24px;
+}
+
+#admin_title {
+    font-size: 18px;
+    font-weight: bold;
+    font-style: italic;
+}
+
+#admin_user {
+    margin-right: 12px;
+    color: #FF7F00;
+}
+
+.logout_form {
+    display: inline;
+}
+
+#admin_header button {
+    background: #FF7F00;
+    color: #fff;
+    border: 0;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#admin_main {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+}
+
+/* Login */
+#login_form {
+    max-width: 320px;
+    margin: 60px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#login_form h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+}
+
+#login_form label {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    gap: 4px;
+}
+
+#login_form input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+}
+
+#login_form button {
+    background: #FF7F00;
+    color: #fff;
+    border: 0;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.login_error {
+    color: #c0392b;
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Dashboard */
+#admin_nav {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+#admin_nav a {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px 30px;
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+}
+
+#admin_nav a:hover {
+    border-color: #FF7F00;
+    color: #FF7F00;
+}
+
+.admin_hint {
+    color: #888;
+    font-size: 13px;
+}
+
+/* Admin CRUD — lists, forms, buttons */
+#admin_title a { color: inherit; text-decoration: none; }
+#admin_session { display: flex; align-items: center; }
+
+.admin_button {
+    display: inline-block;
+    background: #FF7F00;
+    color: #fff;
+    border: 0;
+    padding: 7px 14px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+.admin_button.secondary { background: #888; }
+.admin_button.danger { background: #c0392b; }
+.inline_form { display: inline; }
+
+.admin_list { list-style: none; padding: 0; margin: 20px 0; }
+.admin_list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+}
+.admin_list_name { font-size: 16px; }
+.admin_list_actions { display: flex; gap: 8px; align-items: center; }
+
+.admin_form { background: #fff; padding: 24px; border-radius: 8px; max-width: 720px; }
+.admin_form > label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: bold;
+    max-width: 360px;
+}
+.admin_form input[type=text], .admin_form select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: normal;
+}
+.pedigree_fieldset { border: 1px solid #ddd; border-radius: 6px; margin: 10px 0 20px; }
+.pedigree_fieldset legend { font-weight: bold; padding: 0 6px; }
+#tablapedigree { border-collapse: collapse; width: 100%; }
+#tablapedigree td.ped { padding: 3px; }
+#tablapedigree input[type=text] {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.form_actions { display: flex; gap: 10px; }
+
+/* Photo management */
+.upload_form {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+.upload_form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: bold; }
+.photo_grid { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+.photo_cell {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    position: relative;
+}
+.photo_cell img { width: 150px; height: 150px; object-fit: cover; border-radius: 4px; display: block; }
+.photo_cell form { margin-top: 8px; }
+.photo_main {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #FF7F00;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
