@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="/admin.css" type="text/css" rel="stylesheet" />
+        <link rel="shortcut icon" href="/images/favicon.ico" />
+        <title>Administración · Sorgiña Meiga</title>
+    </head>
+    <body>
+        <header id="admin_header">
+            <span id="admin_title">Administración Sorgiña-Meiga</span>
+            #import("headerRight")
+        </header>
+        <main id="admin_main">
+            #import("content")
+        </main>
+    </body>
+</html>

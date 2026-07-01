@@ -1,0 +1,123 @@
+/* Admin area — a clean, neutral style separate from the public site. */
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f4f6;
+    color: #222;
+}
+
+#admin_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #333;
+    color: #fff;
+    padding: 14px 24px;
+}
+
+#admin_title {
+    font-size: 18px;
+    font-weight: bold;
+    font-style: italic;
+}
+
+#admin_user {
+    margin-right: 12px;
+    color: #FF7F00;
+}
+
+.logout_form {
+    display: inline;
+}
+
+#admin_header button {
+    background: #FF7F00;
+    color: #fff;
+    border: 0;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#admin_main {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+}
+
+/* Login */
+#login_form {
+    max-width: 320px;
+    margin: 60px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#login_form h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+}
+
+#login_form label {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    gap: 4px;
+}
+
+#login_form input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+}
+
+#login_form button {
+    background: #FF7F00;
+    color: #fff;
+    border: 0;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.login_error {
+    color: #c0392b;
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Dashboard */
+#admin_nav {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+#admin_nav a {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px 30px;
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+}
+
+#admin_nav a:hover {
+    border-color: #FF7F00;
+    color: #FF7F00;
+}
+
+.admin_hint {
+    color: #888;
+    font-size: 13px;
+}

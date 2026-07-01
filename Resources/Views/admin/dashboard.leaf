@@ -1,0 +1,18 @@
+#extend("admin/layout"):
+#export("headerRight"):
+<span id="admin_user">#(username)</span>
+<form method="post" action="/admin/logout" class="logout_form">
+    <button type="submit">Salir</button>
+</form>
+#endexport
+#export("content"):
+<h1>Panel de administración</h1>
+<p>Bienvenida, #(username). Gestiona el contenido de la web:</p>
+<nav id="admin_nav">
+    <a href="/admin/perros">Perros</a>
+    <a href="/admin/cachorros">Cachorros</a>
+    <a href="/admin/galerias">Galerías</a>
+</nav>
+<p class="admin_hint">Las secciones se irán activando en las siguientes fases.</p>
+#endexport
+#endextend

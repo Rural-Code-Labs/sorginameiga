@@ -136,4 +136,51 @@ struct sorginameigawebTests {
             })
         }
     }
+
+    // Admin auth (requires local Postgres migrated; admin password = "changeme").
+
+    @Test("Admin area redirects to login when unauthenticated")
+    func adminRequiresLogin() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "admin", afterResponse: { res async in
+                #expect(res.status == .seeOther)
+                #expect(res.headers.first(name: .location) == "/admin/login")
+            })
+            try await app.testing().test(.GET, "admin/login", afterResponse: { res async in
+                #expect(res.status == .ok)
+            })
+        }
+    }
+
+    @Test("Admin login rejects a wrong password")
+    func adminWrongPassword() async throws {
+        try await withApp { app in
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "wrong"], as: .urlEncodedForm)
+            }, afterResponse: { res async in
+                #expect(res.status == .unauthorized)
+            })
+        }
+    }
+
+    @Test("Admin login grants access to the dashboard")
+    func adminLoginSucceeds() async throws {
+        final class CookieBox: @unchecked Sendable { var cookies: HTTPCookies? }
+        let box = CookieBox()
+        try await withApp { app in
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in
+                #expect(res.status == .seeOther)
+                #expect(res.headers.first(name: .location) == "/admin")
+                box.cookies = res.headers.setCookie
+            })
+            try await app.testing().test(.GET, "admin", beforeRequest: { req in
+                if let cookies = box.cookies { req.headers.cookie = cookies }
+            }, afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("Panel de administración"))
+            })
+        }
+    }
 }
