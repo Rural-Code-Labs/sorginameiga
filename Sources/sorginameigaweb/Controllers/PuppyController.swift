@@ -14,7 +14,7 @@ final class PuppyController: RouteCollection, Sendable {
     @Sendable func english(req: Request) async throws -> View { try await render(.ing, on: req) }
 
     private func render(_ language: Language, on req: Request) async throws -> View {
-        let puppies = try await Puppy.query(on: req.db).sort(\.$id).all()
+        let puppies = try await Puppy.query(on: req.db).sort(\.$position).all()
         let translation = req.localization.translation(for: language)
         let blocks = puppies.map { puppy in
             MediaBlock(

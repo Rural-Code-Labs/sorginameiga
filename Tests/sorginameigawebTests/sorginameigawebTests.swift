@@ -310,6 +310,44 @@ struct sorginameigawebTests {
         }
     }
 
+    @Test("Admin can reorder dogs within a sex (↑/↓ swap positions)")
+    func adminReorderDogs() async throws {
+        final class Box: @unchecked Sendable { var cookies: HTTPCookies? }
+        let box = Box()
+        try await withApp { app in
+            // Reordering is protected.
+            let firstMale = try await Dog.query(on: app.db)
+                .filter(\.$sex == Sex.male.rawValue).sort(\.$position).first()
+            let secondMale = try await Dog.query(on: app.db)
+                .filter(\.$sex == Sex.male.rawValue).sort(\.$position).range(1..<2).first()
+            guard let a = firstMale, let b = secondMale else { return } // needs seeded data
+            try await app.testing().test(.POST, "admin/perros/\(b.id ?? 0)/subir", afterResponse: { res async in
+                #expect(res.status == .seeOther) // redirected to login
+            })
+
+            // Log in.
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in box.cookies = res.headers.setCookie })
+
+            let (posA, posB) = (a.position, b.position)
+
+            // Move the second male up: it should now precede the first.
+            try await app.testing().test(.POST, "admin/perros/\(b.id ?? 0)/subir", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            #expect(try await Dog.find(a.id, on: app.db)?.position == posB)
+            #expect(try await Dog.find(b.id, on: app.db)?.position == posA)
+
+            // Move it back down to restore the original order (keep DB clean).
+            try await app.testing().test(.POST, "admin/perros/\(b.id ?? 0)/bajar", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            #expect(try await Dog.find(a.id, on: app.db)?.position == posA)
+            #expect(try await Dog.find(b.id, on: app.db)?.position == posB)
+        }
+    }
+
     @Test("Photo management is protected, renders, and rejects non-JPEG uploads")
     func adminPhotos() async throws {
         final class Box: @unchecked Sendable { var cookies: HTTPCookies? }

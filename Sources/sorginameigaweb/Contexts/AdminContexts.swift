@@ -1,5 +1,15 @@
 import Vapor
 
+extension Array {
+    /// Maps each element to a row, tagging whether it is first/last so the admin
+    /// views can hide the ↑/↓ reorder buttons at the ends of the list.
+    func orderedRows<Row>(_ make: (Element, _ isFirst: Bool, _ isLast: Bool) -> Row) -> [Row] {
+        enumerated().map { index, element in
+            make(element, index == 0, index == count - 1)
+        }
+    }
+}
+
 /// Admin login page. `error` is true after a failed attempt.
 struct AdminLoginContext: Encodable {
     let error: Bool
@@ -10,16 +20,21 @@ struct AdminDashboardContext: Encodable {
     let username: String
 }
 
-/// A row in the admin dog list.
+/// A row in the admin dog list. `isFirst`/`isLast` drive the ↑/↓ reorder
+/// buttons (hidden at the ends of the list).
 struct AdminDogRow: Encodable {
     let id: Int
     let name: String
+    let isFirst: Bool
+    let isLast: Bool
 }
 
-/// Admin dog list page.
+/// Admin dog list page. Dogs are grouped by sex because the public site lists
+/// them separately, so reordering happens within each group.
 struct AdminDogsContext: Encodable {
     let username: String
-    let dogs: [AdminDogRow]
+    let males: [AdminDogRow]
+    let females: [AdminDogRow]
 }
 
 /// New / edit dog form. `action` is where the form posts; `isNew` toggles the
@@ -39,6 +54,8 @@ struct AdminPuppyRow: Encodable {
     let id: Int
     let name: String
     let available: Bool
+    let isFirst: Bool
+    let isLast: Bool
 }
 
 struct AdminPuppiesContext: Encodable {
@@ -67,6 +84,8 @@ struct PuppyForm: Content {
 struct AdminGalleryRow: Encodable {
     let id: Int
     let name: String
+    let isFirst: Bool
+    let isLast: Bool
 }
 
 struct AdminGalleriesContext: Encodable {

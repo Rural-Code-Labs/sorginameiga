@@ -207,8 +207,22 @@ h1 { font-size: 26px; margin: 0 0 20px; }
     margin-bottom: 10px;
     box-shadow: var(--shadow);
 }
-.admin_list_name { font-size: 16px; font-weight: 600; }
+.admin_list_name { font-size: 16px; font-weight: 600; flex: 1; }
 .admin_list_actions { display: flex; gap: 8px; align-items: center; }
+
+/* Reorder (↑/↓) controls */
+.admin_group_title { margin: 28px 0 4px; font-size: 18px; }
+.admin_reorder { display: flex; gap: 4px; align-items: center; }
+.admin_reorder .admin_button {
+    padding: 6px 10px;
+    line-height: 1;
+    font-size: 16px;
+}
+.admin_button.is_disabled {
+    opacity: .35;
+    cursor: default;
+    pointer-events: none;
+}
 
 .badge {
     display: inline-block;

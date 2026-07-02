@@ -36,6 +36,7 @@ func configure(_ app: Application) async throws {
 
     // Migrations: schema + legacy data seed, then sessions and admin.
     app.migrations.add(CreateInitialSchema())
+    app.migrations.add(AddPositionFields())
     app.migrations.add(SeedLegacyData(seed: try LegacySeed.load(from: app)))
     app.migrations.add(SessionRecord.migration)
     app.migrations.add(CreateAdmin())

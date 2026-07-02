@@ -12,6 +12,10 @@
 <ul class="admin_list">
     #for(gallery in galleries):
     <li>
+        <span class="admin_reorder">
+            #if(gallery.isFirst):<span class="admin_button secondary is_disabled">↑</span>#else:<form method="post" action="/admin/galerias/#(gallery.id)/subir" class="inline_form"><button type="submit" class="admin_button secondary" title="Subir">↑</button></form>#endif
+            #if(gallery.isLast):<span class="admin_button secondary is_disabled">↓</span>#else:<form method="post" action="/admin/galerias/#(gallery.id)/bajar" class="inline_form"><button type="submit" class="admin_button secondary" title="Bajar">↓</button></form>#endif
+        </span>
         <span class="admin_list_name">#(gallery.name)</span>
         <span class="admin_list_actions">
             <a class="admin_button secondary" href="/admin/fotos/galerias/#(gallery.id)">Fotos</a>

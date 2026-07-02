@@ -20,13 +20,19 @@ final class Dog: Model, @unchecked Sendable {
     @Field(key: "pedigree")
     var pedigree: Pedigree
 
+    /// Display order within the dog's sex listing (lower shows first). Added in
+    /// phase 9a; backfilled from `id` so the initial order matches the legacy one.
+    @Field(key: "position")
+    var position: Int
+
     init() {}
 
-    init(id: Int, name: String, sex: String, pedigree: Pedigree) {
+    init(id: Int, name: String, sex: String, pedigree: Pedigree, position: Int) {
         self.id = id
         self.name = name
         self.sex = sex
         self.pedigree = pedigree
+        self.position = position
     }
 }
 
