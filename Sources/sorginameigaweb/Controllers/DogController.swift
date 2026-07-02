@@ -43,7 +43,7 @@ final class DogController: RouteCollection, Sendable {
             DogCard(
                 id: dog.id ?? 0,
                 name: dog.name,
-                photo: "/images/\(dog.id ?? 0)/0.jpg",
+                photo: PhotoDirectory.url(in: "images/\(dog.id ?? 0)", index: 0, on: req),
                 url: detailURL(language: language, id: dog.id ?? 0)
             )
         }

@@ -60,6 +60,29 @@ enum PhotoStorage {
         try Data(bytes).write(to: URL(fileURLWithPath: dir + "/\(index).jpg"))
     }
 
+    /// Swaps two photos by exchanging their file names (`<a>.jpg` ↔ `<b>.jpg`)
+    /// via a temporary name. Since order is encoded in the number, this moves one
+    /// photo up/down relative to the other. Best-effort; a no-op if a==b.
+    static func swap(in subpath: String, _ a: Int, _ b: Int, on req: Request) {
+        guard a != b else { return }
+        let dir = req.application.directory.publicDirectory + subpath + "/"
+        let fm = FileManager.default
+        let temp = dir + "__swap__.jpg" // non-numeric name → ignored by PhotoDirectory
+        do {
+            try fm.moveItem(atPath: dir + "\(a).jpg", toPath: temp)
+            try fm.moveItem(atPath: dir + "\(b).jpg", toPath: dir + "\(a).jpg")
+            try fm.moveItem(atPath: temp, toPath: dir + "\(b).jpg")
+            // Renaming preserves the files' modification dates, so bump them: the
+            // `?v=<mtime>` cache-buster must change or browsers keep the old image.
+            let now = Date()
+            try? fm.setAttributes([.modificationDate: now], ofItemAtPath: dir + "\(a).jpg")
+            try? fm.setAttributes([.modificationDate: now], ofItemAtPath: dir + "\(b).jpg")
+        } catch {
+            // Best-effort: if the folder is left with the temp file, roll it back.
+            try? fm.moveItem(atPath: temp, toPath: dir + "\(a).jpg")
+        }
+    }
+
     /// Deletes a single photo (best-effort).
     static func deletePhoto(in subpath: String, index: Int, on req: Request) {
         let path = req.application.directory.publicDirectory + subpath + "/\(index).jpg"
