@@ -20,6 +20,7 @@ enum PageLayout {
             englishURL: englishURL,
             menu: menu(for: language, translation: translation),
             visitCount: await registerVisit(on: req),
+            social: SocialLinks.fromEnvironment(),
             t: translation
         )
     }

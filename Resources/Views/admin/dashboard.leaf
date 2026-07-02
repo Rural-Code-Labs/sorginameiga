@@ -12,7 +12,21 @@
     <h2>Notas de versión</h2>
 
     <article class="version">
-        <h3>Versión 2.0 <span class="version-date">[2026] · Actual</span></h3>
+        <h3>Versión 2.1 <span class="version-date">[Julio 2026] · Actual</span></h3>
+        <p class="version-scope">En la web</p>
+        <ul>
+            <li>Enlaces a <strong>Instagram y Facebook</strong> en la cabecera.</li>
+            <li>Las fotos se abren <strong>ampliadas sobre la misma página</strong>, con navegación (anterior/siguiente) por las fotos de esa sección.</li>
+        </ul>
+        <p class="version-scope">En Administración</p>
+        <ul>
+            <li>Posibilidad de <strong>ordenar</strong> perros, cachorros y galerías (botones subir/bajar).</li>
+            <li>Posibilidad de <strong>ordenar las fotos</strong> (izquierda/derecha); en los perros, la primera foto es la portada.</li>
+        </ul>
+    </article>
+
+    <article class="version">
+        <h3>Versión 2.0 <span class="version-date">[2026]</span></h3>
         <p class="version-scope">Renovación completa</p>
         <ul>
             <li><strong>Migración completa</strong> de PHP a Swift/Vapor, contenerizada.</li>

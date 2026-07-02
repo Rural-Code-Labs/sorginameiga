@@ -138,6 +138,18 @@ struct sorginameigawebTests {
         }
     }
 
+    @Test("Header shows the Instagram and Facebook links")
+    func socialLinks() async throws {
+        try await withApp { app in
+            try await app.testing().test(.GET, "/", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("https://www.instagram.com/sorginameiga/"))
+                #expect(res.body.string.contains("https://www.facebook.com/sorginameiga.lhasas"))
+                #expect(res.body.string.contains("aria-label=\"Instagram\""))
+            })
+        }
+    }
+
     @Test("Public photos open in the on-page lightbox")
     func lightbox() async throws {
         try await withApp { app in
