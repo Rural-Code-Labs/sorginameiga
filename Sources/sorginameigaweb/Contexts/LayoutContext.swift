@@ -20,6 +20,8 @@ struct LayoutContext: Encodable {
     let menu: [MenuItem]
     /// Total visit count for the footer, or `nil` if the counter is unavailable.
     let visitCount: Int?
+    /// Social media profile links shown in the header.
+    let social: SocialLinks
     /// Translated strings for the current language.
     let t: Translation
 }
