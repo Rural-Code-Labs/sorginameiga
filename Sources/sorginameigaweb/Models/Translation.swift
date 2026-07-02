@@ -14,6 +14,9 @@ struct Translation: Encodable, Sendable {
     let links: String       // $LINKS
     let contact: String     // $CONTACTOS
     let back: String        // $VOLVER
+    let close: String       // lightbox close button (phase 9d)
+    let previous: String    // lightbox previous-photo button (phase 9d)
+    let next: String        // lightbox next-photo button (phase 9d)
 
     // Footer
     let totalOf: String     // $UNTOTALDE

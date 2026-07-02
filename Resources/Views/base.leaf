@@ -24,6 +24,7 @@
         </script>
         <link href="/style.css" type="text/css" rel="stylesheet" />
         <link rel="shortcut icon" href="/images/favicon.ico" />
+        <script src="/lightbox.js" defer></script>
         <title>Sorgiña Meiga · #(layout.t.title)</title>
     </head>
     <body>
@@ -32,5 +33,12 @@
             #import("content")
         </main>
         #extend("partials/footer")
+
+        <div id="lightbox" class="lightbox" hidden aria-hidden="true" role="dialog" aria-modal="true">
+            <button class="lightbox-close" type="button" aria-label="#(layout.t.close)">&times;</button>
+            <button class="lightbox-nav lightbox-prev" type="button" aria-label="#(layout.t.previous)" hidden>&lsaquo;</button>
+            <img class="lightbox-img" src="" alt="">
+            <button class="lightbox-nav lightbox-next" type="button" aria-label="#(layout.t.next)" hidden>&rsaquo;</button>
+        </div>
     </body>
 </html>

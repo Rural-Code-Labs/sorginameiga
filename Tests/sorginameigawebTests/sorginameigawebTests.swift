@@ -138,6 +138,23 @@ struct sorginameigawebTests {
         }
     }
 
+    @Test("Public photos open in the on-page lightbox")
+    func lightbox() async throws {
+        try await withApp { app in
+            // Dog detail: photo links are tagged, and the overlay + script are present.
+            try await app.testing().test(.GET, "perro/27", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("data-lightbox"))
+                #expect(res.body.string.contains("id=\"lightbox\""))
+                #expect(res.body.string.contains("/lightbox.js"))
+            })
+            // Galleries page too.
+            try await app.testing().test(.GET, "galeria", afterResponse: { res async in
+                #expect(res.body.string.contains("data-lightbox"))
+            })
+        }
+    }
+
     @Test("Puppies page shows empty state when there are no puppies")
     func puppiesEmpty() async throws {
         try await withApp { app in
