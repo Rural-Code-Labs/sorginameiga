@@ -176,7 +176,8 @@ pick up any recent changes.
 | 7 | Visual redesign — modern responsive layout, light/dark theme (public + admin) | ✅ Done |
 | 8 | Deployment — Cloud Run + Neon + GCS images bucket, 301 redirects; **live** | ✅ Done |
 | 9 | Features (v2.1) — manual ordering of content & photos, Instagram/Facebook links, on-page photo lightbox | ✅ Done |
-| 10 | Domain + DNS cutover to `sorginameiga.com` | ⏳ Pending owners' OK |
+| 10 | Production backups — daily database `pg_dump` to GCS + image bucket versioning | ✅ Done |
+| 11 | Domain + DNS cutover to `sorginameiga.com` | ⏳ Pending owners' OK |
 
 The site is **live in production** on Google Cloud Run (behind the Cloud Run URL
 until the Phase 10 DNS cutover to the custom domain). Deployment details are in

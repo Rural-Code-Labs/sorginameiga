@@ -98,3 +98,49 @@ Then open the service URL that `gcloud run deploy` prints and verify.
 _(to be filled in — includes: re-extract the legacy seed fresh, map
 sorginameiga.com, switch DNS off the DigitalOcean droplet, verify, rollback
 window)_
+
+## Backups
+
+Basic, same-project backups (both in `europe-west3`).
+
+**Photos** — the images bucket has **object versioning** on, with a lifecycle
+rule that deletes noncurrent versions after 60 days and keeps at most 5 newer
+versions per object (so reorders/overwrites don't grow unbounded):
+
+```bash
+gcloud storage buckets update gs://sorginameiga-images --versioning
+gcloud storage buckets update gs://sorginameiga-images --lifecycle-file=deploy/images-lifecycle.json
+```
+
+**Database** — a daily `pg_dump` of Neon → `gs://sorginameiga-backups/db/`,
+retained 90 days (bucket lifecycle). Runs as a Cloud Run Job built from
+`deploy/backup/` (Cloud SDK image + `postgresql-client-18`; Neon runs Postgres
+18, so the client must be ≥ 18), triggered by Cloud Scheduler at 03:00
+Europe/Madrid.
+
+```bash
+# Build + create the job (DATABASE_URL from Secret Manager; SA needs objectAdmin on the backups bucket)
+gcloud builds submit deploy/backup --region=europe-west3 \
+    --tag=europe-west3-docker.pkg.dev/sorgina-meiga/sorginameiga/db-backup:latest
+gcloud run jobs create db-backup --region=europe-west3 \
+    --image=europe-west3-docker.pkg.dev/sorgina-meiga/sorginameiga/db-backup:latest \
+    --set-secrets=DATABASE_URL=database-url:latest \
+    --set-env-vars=BACKUP_BUCKET=gs://sorginameiga-backups \
+    --max-retries=1 --task-timeout=600s
+
+# Daily schedule (dedicated SA backup-scheduler@… with roles/run.invoker on the job)
+gcloud scheduler jobs create http db-backup-daily --location=europe-west3 \
+    --schedule="0 3 * * *" --time-zone="Europe/Madrid" --http-method=POST \
+    --uri="https://run.googleapis.com/v2/projects/sorgina-meiga/locations/europe-west3/jobs/db-backup:run" \
+    --oauth-service-account-email=backup-scheduler@sorgina-meiga.iam.gserviceaccount.com
+
+# Run on demand:
+gcloud run jobs execute db-backup --region=europe-west3 --wait
+```
+
+**Restore** a dump into a database:
+
+```bash
+gcloud storage cp gs://sorginameiga-backups/db/neon-YYYYMMDD-HHMMSS.sql.gz .
+gunzip -c neon-YYYYMMDD-HHMMSS.sql.gz | psql "$TARGET_DATABASE_URL"
+```
