@@ -1,4 +1,5 @@
 import Fluent
+import Foundation
 import Vapor
 
 /// Photo management for dogs, puppies and galleries, under
@@ -90,10 +91,16 @@ final class AdminPhotoController: RouteCollection, Sendable {
             throw Abort(.notFound)
         }
         let subpath = kind.subpath(id: id)
+        // Admin thumbnails use a fresh per-render cache-buster instead of the
+        // file's mtime: on the production GCS-mounted volume (gcsfuse) the mtime
+        // can lag behind a reorder for a few seconds, so an mtime-based `?v=`
+        // would show the cached image until a manual refresh. The admin is very
+        // low-traffic, so not caching its thumbnails is fine.
+        let bust = Int(Date().timeIntervalSince1970)
         let photos = PhotoDirectory.indices(in: subpath, on: req).orderedRows { index, isFirst, isLast in
             AdminPhotoItem(
                 index: index,
-                url: PhotoDirectory.url(in: subpath, index: index, on: req),
+                url: "/\(subpath)/\(index).jpg?v=\(bust)",
                 isMain: kind == .dogs && index == 0,
                 isFirst: isFirst,
                 isLast: isLast
