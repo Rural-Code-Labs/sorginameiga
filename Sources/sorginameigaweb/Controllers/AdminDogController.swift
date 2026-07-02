@@ -15,14 +15,25 @@ final class AdminDogController: RouteCollection, Sendable {
         dogs.get(":dogID", "editar", use: editForm)
         dogs.post(":dogID", use: update)
         dogs.post(":dogID", "borrar", use: delete)
+        dogs.post(":dogID", "subir", use: moveUp)
+        dogs.post(":dogID", "bajar", use: moveDown)
     }
 
     @Sendable
     func list(req: Request) async throws -> View {
         let admin = try req.auth.require(Admin.self)
-        let dogs = try await Dog.query(on: req.db).sort(\.$id).all()
-        let rows = dogs.map { AdminDogRow(id: $0.id ?? 0, name: $0.name) }
-        return try await req.view.render("admin/dogs", AdminDogsContext(username: admin.username, dogs: rows))
+        let dogs = try await Dog.query(on: req.db).sort(\.$position).all()
+        func rows(_ sex: Sex) -> [AdminDogRow] {
+            dogs.filter { $0.sex == sex.rawValue }
+                .orderedRows { dog, isFirst, isLast in
+                    AdminDogRow(id: dog.id ?? 0, name: dog.name, isFirst: isFirst, isLast: isLast)
+                }
+        }
+        return try await req.view.render("admin/dogs", AdminDogsContext(
+            username: admin.username,
+            males: rows(.male),
+            females: rows(.female)
+        ))
     }
 
     @Sendable
@@ -42,7 +53,10 @@ final class AdminDogController: RouteCollection, Sendable {
     func create(req: Request) async throws -> Response {
         let form = try req.content.decode(DogForm.self)
         let maxID = try await Dog.query(on: req.db).max(\.$id) ?? 0
-        let dog = Dog(id: maxID + 1, name: form.name, sex: form.sex, pedigree: form.pedigree)
+        // New dogs go last within their sex.
+        let maxPosition = try await Dog.query(on: req.db)
+            .filter(\.$sex == form.sex).max(\.$position) ?? 0
+        let dog = Dog(id: maxID + 1, name: form.name, sex: form.sex, pedigree: form.pedigree, position: maxPosition + 1)
         try await dog.create(on: req.db)
         return req.redirect(to: "/admin/perros")
     }
@@ -86,6 +100,36 @@ final class AdminDogController: RouteCollection, Sendable {
         }
         try await dog.delete(on: req.db)
         PhotoStorage.removeFolder(PhotoKind.dogs.subpath(id: id), on: req)
+        return req.redirect(to: "/admin/perros")
+    }
+
+    // MARK: - Reordering
+
+    @Sendable func moveUp(req: Request) async throws -> Response { try await move(.up, on: req) }
+    @Sendable func moveDown(req: Request) async throws -> Response { try await move(.down, on: req) }
+
+    /// Swaps the dog's position with its neighbour of the same sex, moving it one
+    /// step up or down in that sex's listing. No-op at the ends.
+    private func move(_ direction: ReorderDirection, on req: Request) async throws -> Response {
+        guard let id = req.parameters.get("dogID", as: Int.self),
+              let dog = try await Dog.find(id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let neighbours = Dog.query(on: req.db).filter(\.$sex == dog.sex)
+        let neighbour: Dog?
+        switch direction {
+        case .up:
+            neighbour = try await neighbours.filter(\.$position < dog.position)
+                .sort(\.$position, .descending).first()
+        case .down:
+            neighbour = try await neighbours.filter(\.$position > dog.position)
+                .sort(\.$position, .ascending).first()
+        }
+        if let neighbour {
+            (dog.position, neighbour.position) = (neighbour.position, dog.position)
+            try await dog.save(on: req.db)
+            try await neighbour.save(on: req.db)
+        }
         return req.redirect(to: "/admin/perros")
     }
 }

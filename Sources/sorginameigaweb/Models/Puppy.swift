@@ -15,11 +15,16 @@ final class Puppy: Model, @unchecked Sendable {
     @Field(key: "available")
     var available: Bool
 
+    /// Display order on the puppies page (lower shows first). Added in phase 9a.
+    @Field(key: "position")
+    var position: Int
+
     init() {}
 
-    init(id: Int, name: String, available: Bool) {
+    init(id: Int, name: String, available: Bool, position: Int) {
         self.id = id
         self.name = name
         self.available = available
+        self.position = position
     }
 }

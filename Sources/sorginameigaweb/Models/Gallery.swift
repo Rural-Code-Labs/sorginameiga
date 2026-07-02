@@ -11,10 +11,15 @@ final class Gallery: Model, @unchecked Sendable {
     @Field(key: "name")
     var name: String
 
+    /// Display order on the galleries page (lower shows first). Added in phase 9a.
+    @Field(key: "position")
+    var position: Int
+
     init() {}
 
-    init(id: Int, name: String) {
+    init(id: Int, name: String, position: Int) {
         self.id = id
         self.name = name
+        self.position = position
     }
 }

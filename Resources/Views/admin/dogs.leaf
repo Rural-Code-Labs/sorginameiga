@@ -6,12 +6,42 @@
     <a class="admin_button" href="/admin/perros/nuevo">+ Agregar nuevo perro</a>
 </div>
 
-#if(count(dogs) == 0):
-<p>No hay perros agregados.</p>
+<h2 class="admin_group_title">Machos</h2>
+#if(count(males) == 0):
+<p>No hay machos agregados.</p>
 #else:
 <ul class="admin_list">
-    #for(dog in dogs):
+    #for(dog in males):
     <li>
+        <span class="admin_reorder">
+            #if(dog.isFirst):<span class="admin_button secondary is_disabled">↑</span>#else:<form method="post" action="/admin/perros/#(dog.id)/subir" class="inline_form"><button type="submit" class="admin_button secondary" title="Subir">↑</button></form>#endif
+            #if(dog.isLast):<span class="admin_button secondary is_disabled">↓</span>#else:<form method="post" action="/admin/perros/#(dog.id)/bajar" class="inline_form"><button type="submit" class="admin_button secondary" title="Bajar">↓</button></form>#endif
+        </span>
+        <span class="admin_list_name">#(dog.name)</span>
+        <span class="admin_list_actions">
+            <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos</a>
+            <a class="admin_button" href="/admin/perros/#(dog.id)/editar">Editar</a>
+            <form method="post" action="/admin/perros/#(dog.id)/borrar" class="inline_form"
+                  onsubmit="return confirm('¿Borrar a #(dog.name)?');">
+                <button type="submit" class="admin_button danger">Borrar</button>
+            </form>
+        </span>
+    </li>
+    #endfor
+</ul>
+#endif
+
+<h2 class="admin_group_title">Hembras</h2>
+#if(count(females) == 0):
+<p>No hay hembras agregadas.</p>
+#else:
+<ul class="admin_list">
+    #for(dog in females):
+    <li>
+        <span class="admin_reorder">
+            #if(dog.isFirst):<span class="admin_button secondary is_disabled">↑</span>#else:<form method="post" action="/admin/perros/#(dog.id)/subir" class="inline_form"><button type="submit" class="admin_button secondary" title="Subir">↑</button></form>#endif
+            #if(dog.isLast):<span class="admin_button secondary is_disabled">↓</span>#else:<form method="post" action="/admin/perros/#(dog.id)/bajar" class="inline_form"><button type="submit" class="admin_button secondary" title="Bajar">↓</button></form>#endif
+        </span>
         <span class="admin_list_name">#(dog.name)</span>
         <span class="admin_list_actions">
             <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos</a>

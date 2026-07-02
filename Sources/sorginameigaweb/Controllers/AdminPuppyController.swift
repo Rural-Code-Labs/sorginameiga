@@ -12,13 +12,17 @@ final class AdminPuppyController: RouteCollection, Sendable {
         puppies.get(":puppyID", "editar", use: editForm)
         puppies.post(":puppyID", use: update)
         puppies.post(":puppyID", "borrar", use: delete)
+        puppies.post(":puppyID", "subir", use: moveUp)
+        puppies.post(":puppyID", "bajar", use: moveDown)
     }
 
     @Sendable
     func list(req: Request) async throws -> View {
         let admin = try req.auth.require(Admin.self)
-        let puppies = try await Puppy.query(on: req.db).sort(\.$id).all()
-        let rows = puppies.map { AdminPuppyRow(id: $0.id ?? 0, name: $0.name, available: $0.available) }
+        let puppies = try await Puppy.query(on: req.db).sort(\.$position).all()
+        let rows = puppies.orderedRows { puppy, isFirst, isLast in
+            AdminPuppyRow(id: puppy.id ?? 0, name: puppy.name, available: puppy.available, isFirst: isFirst, isLast: isLast)
+        }
         return try await req.view.render("admin/puppies", AdminPuppiesContext(username: admin.username, puppies: rows))
     }
 
@@ -38,7 +42,8 @@ final class AdminPuppyController: RouteCollection, Sendable {
     func create(req: Request) async throws -> Response {
         let form = try req.content.decode(PuppyForm.self)
         let maxID = try await Puppy.query(on: req.db).max(\.$id) ?? 0
-        try await Puppy(id: maxID + 1, name: form.name, available: form.isAvailable).create(on: req.db)
+        let maxPosition = try await Puppy.query(on: req.db).max(\.$position) ?? 0
+        try await Puppy(id: maxID + 1, name: form.name, available: form.isAvailable, position: maxPosition + 1).create(on: req.db)
         return req.redirect(to: "/admin/cachorros")
     }
 
@@ -79,6 +84,35 @@ final class AdminPuppyController: RouteCollection, Sendable {
         }
         try await puppy.delete(on: req.db)
         PhotoStorage.removeFolder(PhotoKind.puppies.subpath(id: id), on: req)
+        return req.redirect(to: "/admin/cachorros")
+    }
+
+    // MARK: - Reordering
+
+    @Sendable func moveUp(req: Request) async throws -> Response { try await move(.up, on: req) }
+    @Sendable func moveDown(req: Request) async throws -> Response { try await move(.down, on: req) }
+
+    /// Swaps the puppy's position with its neighbour, moving it one step up or
+    /// down on the puppies page. No-op at the ends.
+    private func move(_ direction: ReorderDirection, on req: Request) async throws -> Response {
+        guard let id = req.parameters.get("puppyID", as: Int.self),
+              let puppy = try await Puppy.find(id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let neighbour: Puppy?
+        switch direction {
+        case .up:
+            neighbour = try await Puppy.query(on: req.db).filter(\.$position < puppy.position)
+                .sort(\.$position, .descending).first()
+        case .down:
+            neighbour = try await Puppy.query(on: req.db).filter(\.$position > puppy.position)
+                .sort(\.$position, .ascending).first()
+        }
+        if let neighbour {
+            (puppy.position, neighbour.position) = (neighbour.position, puppy.position)
+            try await puppy.save(on: req.db)
+            try await neighbour.save(on: req.db)
+        }
         return req.redirect(to: "/admin/cachorros")
     }
 }

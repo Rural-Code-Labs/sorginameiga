@@ -12,13 +12,17 @@ final class AdminGalleryController: RouteCollection, Sendable {
         galleries.get(":galleryID", "editar", use: editForm)
         galleries.post(":galleryID", use: update)
         galleries.post(":galleryID", "borrar", use: delete)
+        galleries.post(":galleryID", "subir", use: moveUp)
+        galleries.post(":galleryID", "bajar", use: moveDown)
     }
 
     @Sendable
     func list(req: Request) async throws -> View {
         let admin = try req.auth.require(Admin.self)
-        let galleries = try await Gallery.query(on: req.db).sort(\.$id).all()
-        let rows = galleries.map { AdminGalleryRow(id: $0.id ?? 0, name: $0.name) }
+        let galleries = try await Gallery.query(on: req.db).sort(\.$position).all()
+        let rows = galleries.orderedRows { gallery, isFirst, isLast in
+            AdminGalleryRow(id: gallery.id ?? 0, name: gallery.name, isFirst: isFirst, isLast: isLast)
+        }
         return try await req.view.render("admin/galleries", AdminGalleriesContext(username: admin.username, galleries: rows))
     }
 
@@ -37,7 +41,8 @@ final class AdminGalleryController: RouteCollection, Sendable {
     func create(req: Request) async throws -> Response {
         let form = try req.content.decode(GalleryForm.self)
         let maxID = try await Gallery.query(on: req.db).max(\.$id) ?? 0
-        try await Gallery(id: maxID + 1, name: form.name).create(on: req.db)
+        let maxPosition = try await Gallery.query(on: req.db).max(\.$position) ?? 0
+        try await Gallery(id: maxID + 1, name: form.name, position: maxPosition + 1).create(on: req.db)
         return req.redirect(to: "/admin/galerias")
     }
 
@@ -76,6 +81,35 @@ final class AdminGalleryController: RouteCollection, Sendable {
         }
         try await gallery.delete(on: req.db)
         PhotoStorage.removeFolder(PhotoKind.galleries.subpath(id: id), on: req)
+        return req.redirect(to: "/admin/galerias")
+    }
+
+    // MARK: - Reordering
+
+    @Sendable func moveUp(req: Request) async throws -> Response { try await move(.up, on: req) }
+    @Sendable func moveDown(req: Request) async throws -> Response { try await move(.down, on: req) }
+
+    /// Swaps the gallery's position with its neighbour, moving it one step up or
+    /// down on the galleries page. No-op at the ends.
+    private func move(_ direction: ReorderDirection, on req: Request) async throws -> Response {
+        guard let id = req.parameters.get("galleryID", as: Int.self),
+              let gallery = try await Gallery.find(id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let neighbour: Gallery?
+        switch direction {
+        case .up:
+            neighbour = try await Gallery.query(on: req.db).filter(\.$position < gallery.position)
+                .sort(\.$position, .descending).first()
+        case .down:
+            neighbour = try await Gallery.query(on: req.db).filter(\.$position > gallery.position)
+                .sort(\.$position, .ascending).first()
+        }
+        if let neighbour {
+            (gallery.position, neighbour.position) = (neighbour.position, gallery.position)
+            try await gallery.save(on: req.db)
+            try await neighbour.save(on: req.db)
+        }
         return req.redirect(to: "/admin/galerias")
     }
 }

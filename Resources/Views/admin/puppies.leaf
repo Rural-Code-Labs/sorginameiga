@@ -12,6 +12,10 @@
 <ul class="admin_list">
     #for(puppy in puppies):
     <li>
+        <span class="admin_reorder">
+            #if(puppy.isFirst):<span class="admin_button secondary is_disabled">↑</span>#else:<form method="post" action="/admin/cachorros/#(puppy.id)/subir" class="inline_form"><button type="submit" class="admin_button secondary" title="Subir">↑</button></form>#endif
+            #if(puppy.isLast):<span class="admin_button secondary is_disabled">↓</span>#else:<form method="post" action="/admin/cachorros/#(puppy.id)/bajar" class="inline_form"><button type="submit" class="admin_button secondary" title="Bajar">↓</button></form>#endif
+        </span>
         <span class="admin_list_name">#(puppy.name)
             <span class="badge">#if(puppy.available):[Disponible]#else:[No disponible]#endif</span>
         </span>

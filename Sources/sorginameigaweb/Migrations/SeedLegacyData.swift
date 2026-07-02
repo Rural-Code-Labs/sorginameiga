@@ -8,12 +8,12 @@ struct SeedLegacyData: AsyncMigration {
 
     func prepare(on database: any Database) async throws {
         for dog in seed.dogs {
-            try await Dog(id: dog.id, name: dog.name, sex: dog.sex, pedigree: dog.ancestors)
+            try await Dog(id: dog.id, name: dog.name, sex: dog.sex, pedigree: dog.ancestors, position: dog.id)
                 .create(on: database)
         }
 
         for gallery in seed.galleries {
-            try await Gallery(id: gallery.id, name: gallery.name)
+            try await Gallery(id: gallery.id, name: gallery.name, position: gallery.id)
                 .create(on: database)
         }
 

@@ -34,7 +34,7 @@ final class DogController: RouteCollection, Sendable {
     private func listing(_ language: Language, sex: Sex, on req: Request) async throws -> View {
         let dogs = try await Dog.query(on: req.db)
             .filter(\.$sex == sex.rawValue)
-            .sort(\.$id)
+            .sort(\.$position)
             .all()
 
         let translation = req.localization.translation(for: language)

@@ -14,7 +14,7 @@ final class GalleryController: RouteCollection, Sendable {
     @Sendable func english(req: Request) async throws -> View { try await render(.ing, on: req) }
 
     private func render(_ language: Language, on req: Request) async throws -> View {
-        let galleries = try await Gallery.query(on: req.db).sort(\.$id).all()
+        let galleries = try await Gallery.query(on: req.db).sort(\.$position).all()
         let blocks = galleries.map { gallery in
             MediaBlock(
                 title: gallery.name,
