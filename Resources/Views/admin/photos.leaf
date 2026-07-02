@@ -22,10 +22,16 @@
     <div class="photo_cell">
         <img src="#(photo.url)" alt="#(title)">
         #if(photo.isMain):<span class="photo_main">principal</span>#endif
-        <form method="post" action="/admin/fotos/#(kind)/#(id)/borrar/#(photo.index)"
-              onsubmit="return confirm('¿Borrar esta foto?');">
-            <button type="submit" class="admin_button danger">Borrar</button>
-        </form>
+        <div class="photo_actions">
+            <span class="admin_reorder">
+                #if(photo.isFirst):<span class="admin_button secondary is_disabled">←</span>#else:<form method="post" action="/admin/fotos/#(kind)/#(id)/izquierda/#(photo.index)" class="inline_form"><button type="submit" class="admin_button secondary" title="Mover a la izquierda">←</button></form>#endif
+                #if(photo.isLast):<span class="admin_button secondary is_disabled">→</span>#else:<form method="post" action="/admin/fotos/#(kind)/#(id)/derecha/#(photo.index)" class="inline_form"><button type="submit" class="admin_button secondary" title="Mover a la derecha">→</button></form>#endif
+            </span>
+            <form method="post" action="/admin/fotos/#(kind)/#(id)/borrar/#(photo.index)"
+                  onsubmit="return confirm('¿Borrar esta foto?');">
+                <button type="submit" class="admin_button danger">Borrar</button>
+            </form>
+        </div>
     </div>
     #endfor
 </div>

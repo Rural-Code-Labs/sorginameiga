@@ -109,8 +109,11 @@ struct GalleryForm: Content {
 struct AdminPhotoItem: Encodable {
     let index: Int
     let url: String
-    /// True for a dog's main photo (index 0).
+    /// True for a dog's main photo (the first one).
     let isMain: Bool
+    /// Drive the ↑/↓ reorder buttons (hidden at the ends).
+    let isFirst: Bool
+    let isLast: Bool
 }
 
 struct AdminPhotosContext: Encodable {

@@ -11,6 +11,9 @@ final class AdminPhotoController: RouteCollection, Sendable {
         photos.get(use: manage)
         photos.on(.POST, body: .collect(maxSize: "10mb"), use: upload)
         photos.post("borrar", ":index", use: deletePhoto)
+        // Photos are shown in a horizontal grid, so they move left/right.
+        photos.post("izquierda", ":index", use: moveLeft)
+        photos.post("derecha", ":index", use: moveRight)
     }
 
     @Sendable
@@ -47,6 +50,30 @@ final class AdminPhotoController: RouteCollection, Sendable {
         return req.redirect(to: "/admin/fotos/\(kind.rawValue)/\(id)")
     }
 
+    // MARK: - Reordering
+
+    // Earlier in the sequence = left; later = right.
+    @Sendable func moveLeft(req: Request) async throws -> Response { try await move(.up, on: req) }
+    @Sendable func moveRight(req: Request) async throws -> Response { try await move(.down, on: req) }
+
+    /// Swaps a photo with its neighbour in display order, moving it one step left
+    /// or right. For dogs, moving a photo to the front makes it the main photo.
+    private func move(_ direction: ReorderDirection, on req: Request) async throws -> Response {
+        let (kind, id) = try params(req)
+        guard let index = req.parameters.get("index", as: Int.self) else {
+            throw Abort(.badRequest)
+        }
+        let subpath = kind.subpath(id: id)
+        let indices = PhotoDirectory.indices(in: subpath, on: req)
+        if let position = indices.firstIndex(of: index) {
+            let neighbourPosition = direction == .up ? position - 1 : position + 1
+            if indices.indices.contains(neighbourPosition) {
+                PhotoStorage.swap(in: subpath, index, indices[neighbourPosition], on: req)
+            }
+        }
+        return req.redirect(to: "/admin/fotos/\(kind.rawValue)/\(id)")
+    }
+
     // MARK: - Helpers
 
     private func params(_ req: Request) throws -> (PhotoKind, Int) {
@@ -63,10 +90,14 @@ final class AdminPhotoController: RouteCollection, Sendable {
             throw Abort(.notFound)
         }
         let subpath = kind.subpath(id: id)
-        let photos = PhotoDirectory.photos(in: subpath, on: req).enumerated().map { _, url -> AdminPhotoItem in
-            // Recover the index from the file name (…/<index>.jpg).
-            let index = Int(url.split(separator: "/").last?.dropLast(4) ?? "0") ?? 0
-            return AdminPhotoItem(index: index, url: url, isMain: kind == .dogs && index == 0)
+        let photos = PhotoDirectory.indices(in: subpath, on: req).orderedRows { index, isFirst, isLast in
+            AdminPhotoItem(
+                index: index,
+                url: PhotoDirectory.url(in: subpath, index: index, on: req),
+                isMain: kind == .dogs && index == 0,
+                isFirst: isFirst,
+                isLast: isLast
+            )
         }
         return try await req.view.render("admin/photos", AdminPhotosContext(
             username: admin.username,

@@ -1,9 +1,12 @@
 @testable import sorginameigaweb
 import Fluent
+import Foundation
 import VaporTesting
 import Testing
 
-@Suite("Home page")
+// Serialized: several admin tests create/delete rows and assert on table counts,
+// which would race if run in parallel (they share one Postgres database).
+@Suite("Home page", .serialized)
 struct sorginameigawebTests {
     private func withApp(_ test: (Application) async throws -> ()) async throws {
         let app = try await Application.make(.testing)
@@ -345,6 +348,59 @@ struct sorginameigawebTests {
             }, afterResponse: { res async in #expect(res.status == .seeOther) })
             #expect(try await Dog.find(a.id, on: app.db)?.position == posA)
             #expect(try await Dog.find(b.id, on: app.db)?.position == posB)
+        }
+    }
+
+    @Test("Admin can reorder photos (↑/↓ swaps the files on disk)")
+    func adminReorderPhotos() async throws {
+        final class Box: @unchecked Sendable { var cookies: HTTPCookies?; var id: Int? }
+        let box = Box()
+        try await withApp { app in
+            // Log in and create a throwaway gallery to hold the photos.
+            try await app.testing().test(.POST, "admin/login", beforeRequest: { req in
+                try req.content.encode(["username": "Pilar&Estibaliz", "password": "changeme"], as: .urlEncodedForm)
+            }, afterResponse: { res async in box.cookies = res.headers.setCookie })
+            try await app.testing().test(.POST, "admin/galerias", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+                try req.content.encode(["name": "TEST PHOTOS ORDER"], as: .urlEncodedForm)
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            let gallery = try await Gallery.query(on: app.db).filter(\.$name == "TEST PHOTOS ORDER").first()
+            box.id = gallery?.id
+            guard let id = box.id else { return }
+
+            // Two distinct valid JPEGs (magic bytes FF D8 FF + a marker).
+            let jpegA: [UInt8] = [0xFF, 0xD8, 0xFF] + Array("AAAA".utf8)
+            let jpegB: [UInt8] = [0xFF, 0xD8, 0xFF] + Array("BBBBBBBB".utf8)
+            for bytes in [jpegA, jpegB] {
+                try await app.testing().test(.POST, "admin/fotos/galerias/\(id)", beforeRequest: { req in
+                    if let c = box.cookies { req.headers.cookie = c }
+                    try req.content.encode(PhotoUpload(file: File(data: ByteBuffer(bytes: bytes), filename: "x.jpg")), as: .formData)
+                }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            }
+
+            // Galleries start at index 1 → 1.jpg = A, 2.jpg = B.
+            let dir = app.directory.publicDirectory + "images/galerias/\(id)/"
+            #expect(Array(try Data(contentsOf: URL(fileURLWithPath: dir + "1.jpg"))) == jpegA)
+
+            // Photo URLs carry a ?v= cache-buster (so a swap forces a browser reload).
+            try await app.testing().test(.GET, "admin/fotos/galerias/\(id)", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in
+                #expect(res.body.string.contains("/images/galerias/\(id)/1.jpg?v="))
+            })
+
+            // Move photo 1 right → swap 1 and 2. Now 1.jpg = B, 2.jpg = A.
+            try await app.testing().test(.POST, "admin/fotos/galerias/\(id)/derecha/1", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            #expect(Array(try Data(contentsOf: URL(fileURLWithPath: dir + "1.jpg"))) == jpegB)
+            #expect(Array(try Data(contentsOf: URL(fileURLWithPath: dir + "2.jpg"))) == jpegA)
+
+            // Cleanup: deleting the gallery removes its photo folder.
+            try await app.testing().test(.POST, "admin/galerias/\(id)/borrar", beforeRequest: { req in
+                if let c = box.cookies { req.headers.cookie = c }
+            }, afterResponse: { res async in #expect(res.status == .seeOther) })
+            #expect(!FileManager.default.fileExists(atPath: dir))
         }
     }
 
