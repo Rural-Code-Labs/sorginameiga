@@ -11,7 +11,7 @@
         <h2 class="media-title">#(block.title)#if(block.badge): <span class="badge">#(block.badge)</span>#endif</h2>
         <div class="photo-grid">
             #for(photo in block.photos):
-            <a class="photo-item" href="#(photo)" target="_blank">
+            <a class="photo-item" href="#(photo)" target="_blank" data-lightbox>
                 <img src="#(photo)" alt="#(block.title)" loading="lazy">
             </a>
             #endfor
