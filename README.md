@@ -51,15 +51,27 @@ the known problems of the legacy code are deliberately **not** reproduced.
 - **Design choice — classes vs structs.** Services and controllers are classes
   (reference semantics, mirroring the legacy PHP classes); data carried to the
   templates is value-type `Encodable` structs.
+- **Content ordering.** Dogs, puppies and galleries carry a `position` and their
+  photos are ordered by file name; the admin reorders both with ↑/↓ (lists) and
+  ←/→ (photos). Because reordering swaps file contents under the same URL, photo
+  URLs carry a `?v=` cache-buster so browsers reload the changed image.
+- **Social links & lightbox.** The header shows Instagram/Facebook icons
+  (`SocialLinks`, overridable via `INSTAGRAM_URL` / `FACEBOOK_URL`). Public photos
+  open in an on-page overlay (`Public/lightbox.js`, vanilla JS) with prev/next
+  navigation within the same group.
 
 ### Data model
 
 | Model | Table | Notes |
 |---|---|---|
-| `Dog` | `dogs` | `name`, `sex` (`macho`/`hembra`), `pedigree` (JSON) |
-| `Puppy` | `puppies` | `name`, `available` |
-| `Gallery` | `galleries` | `name` |
+| `Dog` | `dogs` | `name`, `sex` (`macho`/`hembra`), `pedigree` (JSON), `position` |
+| `Puppy` | `puppies` | `name`, `available`, `position` |
+| `Gallery` | `galleries` | `name`, `position` |
 | `VisitCounter` | `visit_counter` | single row; site-wide visit count |
+
+`position` is the admin-controlled display order (lower shows first). Photos
+are numbered files (`0.jpg`, `1.jpg`, …) and reordered by swapping their names;
+for dogs `0.jpg` is the cover photo.
 
 ### Routes
 
@@ -72,8 +84,8 @@ the known problems of the legacy code are deliberately **not** reproduced.
 | `/galeria` · `/en/gallery` | Photo galleries |
 | `/contacto` · `/en/contact` | Contact details |
 | `/admin/login` · `/admin` | Admin login + dashboard |
-| `/admin/{perros,cachorros,galerias}` | CRUD (protected) |
-| `/admin/fotos/:kind/:id` | Photo management (protected) |
+| `/admin/{perros,cachorros,galerias}` | CRUD + reorder (protected) |
+| `/admin/fotos/:kind/:id` | Photo management + reorder (protected) |
 
 ## Project structure
 
@@ -82,15 +94,15 @@ Sources/sorginameigaweb/
 ├── Models/          Fluent models + Pedigree, Language, Translation
 ├── Migrations/      schema + legacy data seed
 ├── Seed/            LegacySeed loader (reads Resources/seed/legacy.json)
-├── Services/        LocalizationService, PageLayout
-├── Controllers/     HomeController, DogController
+├── Services/        LocalizationService, PageLayout, PhotoStorage, PhotoDirectory, SocialLinks
+├── Controllers/     public (Home, Dog, Gallery, Puppy, Contact) + admin (Dog, Puppy, Gallery, Photo)
 ├── Contexts/        Encodable view contexts
 ├── configure.swift  app/DB/migrations wiring
 └── routes.swift
 Resources/
 ├── Views/           Leaf templates (base, partials, pages)
 └── seed/legacy.json production data snapshot
-Public/              style.css, images/ (served statically)
+Public/              style.css, admin.css, lightbox.js, images/ (served statically)
 ```
 
 ## Getting started
@@ -137,6 +149,11 @@ The database connection is read from environment variables (defaults match the
 | `DATABASE_PASSWORD` | `vapor_password` |
 | `DATABASE_NAME` | `vapor_database` |
 
+In production a single `DATABASE_URL` (the Neon pooled connection string, with
+`sslmode=require`) takes precedence over the individual `DATABASE_*` vars.
+Optional overrides: `ADMIN_PASSWORD` (seeds the admin password on first migrate),
+`INSTAGRAM_URL` / `FACEBOOK_URL` (header social links).
+
 ## Database & seed data
 
 The production content (dogs, galleries, visit counter) is shipped as a seed in
@@ -157,15 +174,21 @@ pick up any recent changes.
 | 5 | Contact page (details only, matching current production) | ✅ Done |
 | 6 | Admin area — CRUD + photo management, with security fixes (bcrypt, sessions, validated uploads) | ✅ Done |
 | 7 | Visual redesign — modern responsive layout, light/dark theme (public + admin) | ✅ Done |
-| 8 | Deployment — Cloud Run + Neon + GCS images bucket, 301 redirects; **live**, pending domain/DNS cutover | 🚧 In progress |
+| 8 | Deployment — Cloud Run + Neon + GCS images bucket, 301 redirects; **live** | ✅ Done |
+| 9 | Features (v2.1) — manual ordering of content & photos, Instagram/Facebook links, on-page photo lightbox | ✅ Done |
+| 10 | Domain + DNS cutover to `sorginameiga.com` | ⏳ Pending owners' OK |
 
-Deployment details are in [`deploy/DEPLOY.md`](deploy/DEPLOY.md).
+The site is **live in production** on Google Cloud Run (behind the Cloud Run URL
+until the Phase 10 DNS cutover to the custom domain). Deployment details are in
+[`deploy/DEPLOY.md`](deploy/DEPLOY.md).
 
 ## Deployment target
 
 The production target is **Google Cloud Run** (containerized, scales to zero)
-with a **Neon** serverless PostgreSQL database. Both in an EU region; the
-container is built in CI and pushed to a registry. Finalized in Phase 7.
+with a **Neon** serverless PostgreSQL database and a **GCS** bucket for images
+(mounted as a volume). All in an EU region; the container image is built in the
+cloud (Cloud Build, native amd64) and pushed to Artifact Registry. The container
+runs `serve` only — schema migrations are applied to Neon out-of-band.
 
 ## See more
 
