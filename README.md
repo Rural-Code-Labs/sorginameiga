@@ -62,6 +62,11 @@ the known problems of the legacy code are deliberately **not** reproduced.
   (`SocialLinks`, overridable via `INSTAGRAM_URL` / `FACEBOOK_URL`). Public photos
   open in an on-page overlay (`Public/lightbox.js`, vanilla JS) with prev/next
   navigation within the same group.
+- **Analytics (opt-in, consent-gated).** When `GA_MEASUREMENT_ID` is set, the
+  public site loads Google Analytics 4 behind **Google Consent Mode v2** — every
+  storage is denied until the visitor accepts a bilingual cookie banner
+  (`Analytics` service, banner in `base.leaf`). With the variable unset, no tag
+  or banner is emitted; the admin area is never tracked.
 
 ### Data model
 
@@ -155,7 +160,9 @@ The database connection is read from environment variables (defaults match the
 In production a single `DATABASE_URL` (the Neon pooled connection string, with
 `sslmode=require`) takes precedence over the individual `DATABASE_*` vars.
 Optional overrides: `ADMIN_PASSWORD` (seeds the admin password on first migrate),
-`INSTAGRAM_URL` / `FACEBOOK_URL` (header social links).
+`INSTAGRAM_URL` / `FACEBOOK_URL` (header social links), and `GA_MEASUREMENT_ID`
+(a GA4 Measurement ID, e.g. `G-XXXXXXXXXX`, that enables Google Analytics on the
+public site behind a cookie-consent banner; analytics is off when it is unset).
 
 ## Database & seed data
 
@@ -182,7 +189,7 @@ the legacy database (now decommissioned).
 | 9 | Features (v2.1) — manual ordering of content & photos, Instagram/Facebook links, on-page photo lightbox | ✅ Done |
 | 10 | Production backups — daily database `pg_dump` to GCS + image bucket versioning | ✅ Done |
 | 11 | Domain + DNS cutover to `sorginameiga.com` (managed HTTPS, legacy decommissioned) | ✅ Done |
-| 12 | Analytics (v2.2) — Google Analytics 4 | 🔜 Planned |
+| 12 | Analytics (v2.2) — Google Analytics 4 behind a cookie-consent banner (Consent Mode v2); site-wide orthography review | ✅ Done |
 
 The site is **live in production** at **https://sorginameiga.com** on Google
 Cloud Run (`europe-west1`), with Google-managed SSL. The legacy PHP/MySQL host

@@ -40,6 +40,11 @@ struct Translation: Encodable, Sendable {
     let noPuppies: String
     let noGalleries: String
 
+    // Cookie-consent banner (phase 12 — Google Analytics)
+    let cookieText: String
+    let cookieAccept: String
+    let cookieReject: String
+
     // Home page — contains HTML markup, rendered raw in the template.
     let presentation: String // $PRESENTACION
 }

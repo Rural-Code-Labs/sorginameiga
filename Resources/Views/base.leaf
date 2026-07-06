@@ -22,6 +22,29 @@
                 document.querySelector('.header-inner').classList.toggle('nav-open');
             }
         </script>
+        #if(layout.analytics.enabled):
+        <!-- Google Analytics 4 behind Consent Mode v2: all storage denied by
+             default; analytics_storage is only granted once the visitor accepts
+             the cookie banner. A stored "granted" choice is re-applied on load. -->
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied',
+                'analytics_storage': 'denied'
+            });
+            try {
+                if (localStorage.getItem('cookie-consent') === 'granted') {
+                    gtag('consent', 'update', { 'analytics_storage': 'granted' });
+                }
+            } catch (e) {}
+            gtag('js', new Date());
+            gtag('config', '#(layout.analytics.measurementId)');
+        </script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=#(layout.analytics.measurementId)"></script>
+        #endif
         <link href="/style.css" type="text/css" rel="stylesheet" />
         <link rel="shortcut icon" href="/images/favicon.ico" />
         <script src="/lightbox.js" defer></script>
@@ -40,5 +63,30 @@
             <img class="lightbox-img" src="" alt="">
             <button class="lightbox-nav lightbox-next" type="button" aria-label="#(layout.t.next)" hidden>&rsaquo;</button>
         </div>
+
+        #if(layout.analytics.enabled):
+        <div id="cookie-banner" class="cookie-banner" role="dialog" aria-live="polite" hidden>
+            <p class="cookie-text">#(layout.t.cookieText)</p>
+            <div class="cookie-actions">
+                <button type="button" class="cookie-btn cookie-reject" onclick="cookieConsent(false)">#(layout.t.cookieReject)</button>
+                <button type="button" class="cookie-btn cookie-accept" onclick="cookieConsent(true)">#(layout.t.cookieAccept)</button>
+            </div>
+        </div>
+        <script>
+            (function () {
+                var banner = document.getElementById('cookie-banner');
+                var stored = null;
+                try { stored = localStorage.getItem('cookie-consent'); } catch (e) {}
+                if (!stored) { banner.hidden = false; }
+                window.cookieConsent = function (granted) {
+                    try { localStorage.setItem('cookie-consent', granted ? 'granted' : 'denied'); } catch (e) {}
+                    if (granted && typeof gtag === 'function') {
+                        gtag('consent', 'update', { 'analytics_storage': 'granted' });
+                    }
+                    banner.hidden = true;
+                };
+            })();
+        </script>
+        #endif
     </body>
 </html>

@@ -12,7 +12,17 @@
     <h2>Notas de versión</h2>
 
     <article class="version">
-        <h3>Versión 2.1 <span class="version-date">[Julio 2026] · Actual</span></h3>
+        <h3>Versión 2.2 <span class="version-date">[Julio 2026] · Actual</span></h3>
+        <p class="version-scope">En la web</p>
+        <ul>
+            <li><strong>Analítica de visitas</strong> con Google Analytics.</li>
+            <li><strong>Aviso de cookies</strong> (aceptar / rechazar) conforme al RGPD: la analítica solo se activa si el visitante la acepta.</li>
+            <li>Repaso ortográfico de todos los textos (español e inglés).</li>
+        </ul>
+    </article>
+
+    <article class="version">
+        <h3>Versión 2.1 <span class="version-date">[Julio 2026]</span></h3>
         <p class="version-scope">En la web</p>
         <ul>
             <li>Enlaces a <strong>Instagram y Facebook</strong> en la cabecera.</li>

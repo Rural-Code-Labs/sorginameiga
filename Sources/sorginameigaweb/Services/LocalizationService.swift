@@ -39,6 +39,9 @@ final class LocalizationService: Sendable {
             formSend: "Enviar",
             noPuppies: "No hay cachorros disponibles en este momento.",
             noGalleries: "No hay galerías disponibles en este momento.",
+            cookieText: "Usamos cookies de Google Analytics para medir las visitas. Puedes aceptarlas o rechazarlas.",
+            cookieAccept: "Aceptar",
+            cookieReject: "Rechazar",
             presentation: """
             <p>Hola:</p>
             <p>Somos Pilar Díaz y Estíbaliz Domínguez, propietarias del criadero de lhasa apso Sorgiña-Meiga. </p>
@@ -79,6 +82,9 @@ final class LocalizationService: Sendable {
             formSend: "Send",
             noPuppies: "There are no puppies available at the moment.",
             noGalleries: "There are no galleries available at the moment.",
+            cookieText: "We use Google Analytics cookies to measure visits. You can accept or reject them.",
+            cookieAccept: "Accept",
+            cookieReject: "Reject",
             presentation: """
             <p>Hello:</p>
             <p>We are Pilar Díaz and Estíbaliz Domínguez, owners of Sorgiña-Meiga, a lhasa apso kennel.</p>

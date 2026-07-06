@@ -21,6 +21,7 @@ enum PageLayout {
             menu: menu(for: language, translation: translation),
             visitCount: await registerVisit(on: req),
             social: SocialLinks.fromEnvironment(),
+            analytics: Analytics.fromEnvironment(),
             t: translation
         )
     }

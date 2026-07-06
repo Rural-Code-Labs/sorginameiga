@@ -45,6 +45,36 @@ struct sorginameigawebTests {
         }
     }
 
+    @Test("Analytics is disabled by default: no Google tag or cookie banner")
+    func analyticsDisabledByDefault() async throws {
+        unsetenv("GA_MEASUREMENT_ID")
+        try await withApp { app in
+            try await app.testing().test(.GET, "/", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(!res.body.string.contains("googletagmanager"))
+                #expect(!res.body.string.contains("cookie-banner"))
+            })
+        }
+    }
+
+    @Test("Analytics + consent banner render when GA_MEASUREMENT_ID is set")
+    func analyticsEnabledWithMeasurementId() async throws {
+        setenv("GA_MEASUREMENT_ID", "G-TEST12345", 1)
+        defer { unsetenv("GA_MEASUREMENT_ID") }
+        try await withApp { app in
+            try await app.testing().test(.GET, "/", afterResponse: { res async in
+                #expect(res.status == .ok)
+                #expect(res.body.string.contains("googletagmanager.com/gtag/js?id=G-TEST12345"))
+                #expect(res.body.string.contains("gtag('consent', 'default'"))
+                #expect(res.body.string.contains("id=\"cookie-banner\""))
+            })
+            // The admin area does not extend the public layout, so it is never tracked.
+            try await app.testing().test(.GET, "admin/login", afterResponse: { res async in
+                #expect(!res.body.string.contains("googletagmanager"))
+            })
+        }
+    }
+
     @Test("Legacy .php URLs redirect (301) to the new clean routes")
     func legacyRedirects() async throws {
         try await withApp { app in

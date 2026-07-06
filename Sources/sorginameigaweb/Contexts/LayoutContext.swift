@@ -22,6 +22,8 @@ struct LayoutContext: Encodable {
     let visitCount: Int?
     /// Social media profile links shown in the header.
     let social: SocialLinks
+    /// Google Analytics configuration (disabled unless `GA_MEASUREMENT_ID` is set).
+    let analytics: Analytics
     /// Translated strings for the current language.
     let t: Translation
 }

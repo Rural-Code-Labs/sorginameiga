@@ -25,7 +25,10 @@
     </head>
     <body>
         <header id="admin_header">
-            <span id="admin_title"><a href="/admin">Administración Sorgiña-Meiga</a></span>
+            <span id="admin_titlebar">
+                <span id="admin_title"><a href="/admin">Administración Sorgiña-Meiga</a></span>
+                <a id="admin_viewsite" href="/" target="_blank" rel="noopener">(ver web)</a>
+            </span>
             <div id="admin_header_right">
                 <button class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Cambiar tema claro/oscuro">
                     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
