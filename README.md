@@ -8,10 +8,13 @@ Swift).
 ## Background
 
 The original site (`old_web/` in the parent repository) was written ~13 years
-ago in procedural PHP and is **still live and in production**. It is severely
-outdated: it uses the `mysql_*` extension (removed in PHP 7.0), has SQL
-injection throughout, stores the admin password in plain text, and has no build
-system, tests, CI, or version control.
+ago in procedural PHP and ran **live in production until 2026-07-06**, when this
+rewrite took over the domain and the legacy PHP/MySQL host was decommissioned.
+Its sanitized source is archived at
+[Rural-Code-Labs/sorginameiga_old](https://github.com/Rural-Code-Labs/sorginameiga_old).
+The legacy code was severely outdated: it used the `mysql_*` extension (removed
+in PHP 7.0), had SQL injection throughout, stored the admin password in plain
+text, and had no build system, tests, CI, or version control.
 
 This project is a from-scratch reimplementation in a containerized, modern stack.
 It is **not** a line-by-line port: the behaviour and content are preserved, but
@@ -160,8 +163,9 @@ The production content (dogs, galleries, visit counter) is shipped as a seed in
 `Resources/seed/legacy.json`, extracted from the live MySQL database with a
 Latin1 → UTF-8 correction. Because the site's content changes rarely, the data
 is seeded rather than imported live, so the app is self-contained and needs no
-MySQL connection to stand up. Re-extract the seed before the final cutover to
-pick up any recent changes.
+MySQL connection to stand up. At the final cutover the content was already the
+source of truth in Postgres, so only the live visit counter was re-synced from
+the legacy database (now decommissioned).
 
 ## Migration phases
 
@@ -177,10 +181,12 @@ pick up any recent changes.
 | 8 | Deployment — Cloud Run + Neon + GCS images bucket, 301 redirects; **live** | ✅ Done |
 | 9 | Features (v2.1) — manual ordering of content & photos, Instagram/Facebook links, on-page photo lightbox | ✅ Done |
 | 10 | Production backups — daily database `pg_dump` to GCS + image bucket versioning | ✅ Done |
-| 11 | Domain + DNS cutover to `sorginameiga.com` | ⏳ Pending owners' OK |
+| 11 | Domain + DNS cutover to `sorginameiga.com` (managed HTTPS, legacy decommissioned) | ✅ Done |
+| 12 | Analytics (v2.2) — Google Analytics 4 | 🔜 Planned |
 
-The site is **live in production** on Google Cloud Run (behind the Cloud Run URL
-until the Phase 10 DNS cutover to the custom domain). Deployment details are in
+The site is **live in production** at **https://sorginameiga.com** on Google
+Cloud Run (`europe-west1`), with Google-managed SSL. The legacy PHP/MySQL host
+has been decommissioned. Deployment details are in
 [`deploy/DEPLOY.md`](deploy/DEPLOY.md).
 
 ## Deployment target
