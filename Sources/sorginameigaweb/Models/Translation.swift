@@ -17,6 +17,7 @@ struct Translation: Encodable, Sendable {
     let close: String       // lightbox close button (phase 9d)
     let previous: String    // lightbox previous-photo button (phase 9d)
     let next: String        // lightbox next-photo button (phase 9d)
+    let pedigree: String    // dog detail: pedigree table heading
 
     // Footer
     let totalOf: String     // $UNTOTALDE

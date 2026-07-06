@@ -28,7 +28,7 @@ struct sorginameigawebTests {
                     #expect(res.status == .ok)
                     #expect(res.body.string.contains("Criadero Lhasa Apso"))
                     #expect(res.body.string.contains("Pilar Díaz"))
-                    #expect(res.body.string.contains("¿Quienes Somos?"))
+                    #expect(res.body.string.contains("¿Quiénes Somos?"))
                 })
             }
         }

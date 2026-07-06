@@ -25,7 +25,7 @@
         </div>
 
         <div class="pedigree">
-            <h2 class="pedigree-title">Pedigree</h2>
+            <h2 class="pedigree-title">#(layout.t.pedigree)</h2>
             <div class="pedigree-scroll">
                 <table class="pedigree-table">
                     <tr>
