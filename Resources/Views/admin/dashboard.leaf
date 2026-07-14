@@ -24,6 +24,7 @@
         <ul>
             <li><strong>Añadir vídeos</strong> pegando la dirección (URL) del vídeo de YouTube o Vimeo, y ordenarlos junto a las fotos.</li>
             <li><strong>Editar fotos y vídeos ya publicados</strong> sin borrarlos: reemplazar una foto por otra, o cambiar la URL de un vídeo, manteniendo su posición.</li>
+            <li>Nuevo panel de <strong>Estadísticas de visitas</strong> (datos de Google Analytics): resumen (hoy / 7 / 30 días y en tiempo real), gráfica de tendencia, páginas más vistas, países y dispositivos — sin salir del panel.</li>
         </ul>
     </article>
 

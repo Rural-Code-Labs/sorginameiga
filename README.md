@@ -79,6 +79,15 @@ the known problems of the legacy code are deliberately **not** reproduced.
   photo (the listing card uses it). The admin can also **edit in place** without
   re-adding: replace a photo's file or change a video's URL, keeping its
   position.
+- **Admin analytics dashboard (v2.3).** `/admin/estadisticas` shows the site's
+  Google Analytics numbers inside the panel (the owners don't use
+  analytics.google.com): a visits summary (now / today / 7-day / 30-day), a
+  hand-rolled inline-SVG 30-day trend chart, and top pages / countries / devices.
+  `AnalyticsReports` reads the **GA4 Data API**; the OAuth token comes from the
+  Cloud Run metadata server (the runtime service account is a Viewer on the GA
+  property) or a `GA_ACCESS_TOKEN` override for local runs — no key files.
+  Disabled unless `GA_PROPERTY_ID` is set (then the page shows a "not configured"
+  notice); response parsing is pure and unit-tested.
 
 ### Data model
 
@@ -107,6 +116,7 @@ for dogs `0.jpg` is the cover photo.
 | `/admin/login` · `/admin` | Admin login + dashboard |
 | `/admin/{perros,cachorros,galerias}` | CRUD + reorder (protected) |
 | `/admin/fotos/:kind/:id` | Photos + videos: upload/add, replace/edit, delete, reorder (protected) |
+| `/admin/estadisticas` | Google Analytics visits dashboard (protected) |
 
 ## Project structure
 
@@ -115,8 +125,8 @@ Sources/sorginameigaweb/
 ├── Models/          Fluent models (Dog, Puppy, Gallery, MediaVideo, …) + Pedigree, Language, Translation
 ├── Migrations/      schema + legacy data seed
 ├── Seed/            LegacySeed loader (reads Resources/seed/legacy.json)
-├── Services/        LocalizationService, PageLayout, PhotoStorage, PhotoDirectory, SocialLinks, VideoEmbed, MediaLayout
-├── Controllers/     public (Home, Dog, Gallery, Puppy, Contact) + admin (Dog, Puppy, Gallery, Photo)
+├── Services/        LocalizationService, PageLayout, PhotoStorage, PhotoDirectory, SocialLinks, VideoEmbed, MediaLayout, Analytics, AnalyticsReports
+├── Controllers/     public (Home, Dog, Gallery, Puppy, Contact) + admin (Dog, Puppy, Gallery, Photo, Stats)
 ├── Contexts/        Encodable view contexts
 ├── configure.swift  app/DB/migrations wiring
 └── routes.swift
@@ -204,6 +214,7 @@ the legacy database (now decommissioned).
 | 11 | Domain + DNS cutover to `sorginameiga.com` (managed HTTPS, legacy decommissioned) | ✅ Done |
 | 12 | Analytics (v2.2) — Google Analytics 4 behind a cookie-consent banner (Consent Mode v2); site-wide orthography review | ✅ Done |
 | 13 | Multimedia galleries (v2.3) — embedded YouTube/Vimeo videos mixed with photos on dogs/puppies/galleries; in-place editing (replace photo / change video URL); mobile cookie-banner fix | ✅ Done |
+| 14 | Admin analytics (v2.3) — Google Analytics visits dashboard in the panel (`/admin/estadisticas`): summary, trend chart, top pages/countries/devices via the GA4 Data API | ✅ Done |
 
 The site is **live in production** at **https://sorginameiga.com** on Google
 Cloud Run (`europe-west1`), with Google-managed SSL. The legacy PHP/MySQL host
