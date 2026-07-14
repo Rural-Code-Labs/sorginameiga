@@ -6,6 +6,7 @@
     <a href="/admin/perros">Perros</a>
     <a href="/admin/cachorros">Cachorros</a>
     <a href="/admin/galerias">Galerías</a>
+    <a href="/admin/estadisticas">Estadísticas</a>
 </nav>
 
 <section class="version-notes">

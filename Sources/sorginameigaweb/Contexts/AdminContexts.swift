@@ -149,6 +149,25 @@ struct VideoForm: Content {
     var url: String
 }
 
+// MARK: - Stats
+
+/// Admin stats page (`/admin/estadisticas`): Google Analytics visit data.
+struct AdminStatsContext: Encodable {
+    let username: String
+    /// False when `GA_PROPERTY_ID` is unset (local/dev) → shows a notice.
+    let configured: Bool
+    /// Friendly message when a fetch fails (403, network); nil on success.
+    let error: String?
+    /// True when we have real data to show (configured, no error).
+    let hasData: Bool
+    let today: Int
+    let last7: Int
+    let last30: Int
+    let activeNow: Int
+    /// Pre-rendered inline SVG of the 30-day trend (output with `#unsafeHTML`).
+    let chartSVG: String
+}
+
 // MARK: - Dogs
 
 /// Submitted dog form. HTML always sends every named field (empty = ""), so the

@@ -1,0 +1,38 @@
+#extend("admin/layout"):
+#export("content"):
+<h1>Estadísticas de visitas</h1>
+<p><a class="admin_button secondary" href="/admin">← Volver al panel</a></p>
+
+#if(!configured):
+<p class="stats_notice">La analítica no está configurada en este entorno. Los datos de Google Analytics se ven en la web publicada.</p>
+#elseif(error):
+<p class="login_error">#(error)</p>
+#else:
+<div class="stats_kpis">
+    <div class="kpi">
+        <span class="kpi_value">#(activeNow)</span>
+        <span class="kpi_label">Ahora mismo</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi_value">#(today)</span>
+        <span class="kpi_label">Hoy</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi_value">#(last7)</span>
+        <span class="kpi_label">Últimos 7 días</span>
+    </div>
+    <div class="kpi kpi_main">
+        <span class="kpi_value">#(last30)</span>
+        <span class="kpi_label">Últimos 30 días</span>
+    </div>
+</div>
+
+<section class="stats_chart_box">
+    <h2 class="stats_chart_title">Visitas por día · últimos 30 días</h2>
+    #unsafeHTML(chartSVG)
+</section>
+
+<p class="stats_footnote">Datos de Google Analytics. «Visitas» = sesiones. Las cifras de hoy pueden estar incompletas y se actualizan a lo largo del día.</p>
+#endif
+#endexport
+#endextend

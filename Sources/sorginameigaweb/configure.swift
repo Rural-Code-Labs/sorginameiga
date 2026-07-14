@@ -49,6 +49,10 @@ func configure(_ app: Application) async throws {
     // Shared, request-independent localization service.
     app.localization = LocalizationService()
 
+    // GA4 Data API reader for the admin stats page (disabled unless
+    // GA_PROPERTY_ID is set).
+    app.analyticsReports = AnalyticsReports.fromEnvironment()
+
     app.views.use(.leaf)
 
     // CLI: set/rotate the admin password (used after the placeholder seed).

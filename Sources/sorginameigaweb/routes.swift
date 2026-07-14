@@ -24,4 +24,5 @@ func routes(_ app: Application) throws {
     try admin.register(collection: AdminPuppyController())
     try admin.register(collection: AdminGalleryController())
     try admin.register(collection: AdminPhotoController())
+    try admin.register(collection: AdminStatsController())
 }
