@@ -20,7 +20,7 @@
             <span class="badge">#if(puppy.available):[Disponible]#else:[No disponible]#endif</span>
         </span>
         <span class="admin_list_actions">
-            <a class="admin_button secondary" href="/admin/fotos/cachorros/#(puppy.id)">Fotos</a>
+            <a class="admin_button secondary" href="/admin/fotos/cachorros/#(puppy.id)">Fotos / Vídeos</a>
             <a class="admin_button" href="/admin/cachorros/#(puppy.id)/editar">Editar</a>
             <form method="post" action="/admin/cachorros/#(puppy.id)/borrar" class="inline_form"
                   onsubmit="return confirm('¿Borrar #(puppy.name)?');">

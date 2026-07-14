@@ -163,7 +163,7 @@ struct sorginameigawebTests {
             })
             try await app.testing().test(.GET, "en/gallery", afterResponse: { res async in
                 #expect(res.status == .ok)
-                #expect(res.body.string.contains("Photo Gallery"))
+                #expect(res.body.string.contains("Multimedia Gallery"))
             })
         }
     }
@@ -449,7 +449,7 @@ struct sorginameigawebTests {
             })
 
             // Move photo 1 right → swap 1 and 2. Now 1.jpg = B, 2.jpg = A.
-            try await app.testing().test(.POST, "admin/fotos/galerias/\(id)/derecha/1", beforeRequest: { req in
+            try await app.testing().test(.POST, "admin/fotos/galerias/\(id)/mover/photo-1/derecha", beforeRequest: { req in
                 if let c = box.cookies { req.headers.cookie = c }
             }, afterResponse: { res async in #expect(res.status == .seeOther) })
             #expect(Array(try Data(contentsOf: URL(fileURLWithPath: dir + "1.jpg"))) == jpegB)

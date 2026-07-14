@@ -21,23 +21,50 @@ struct DogsPageContext: Encodable {
     let dogs: [DogCard]
 }
 
-/// Single dog detail page with photos and the four-generation pedigree.
+/// Single dog detail page with media and the four-generation pedigree.
 struct DogDetailContext: Encodable {
     let layout: LayoutContext
     let name: String
-    /// Photo URLs; the first is the main photo, the rest are extras.
-    let photos: [String]
+    /// The large cover: always the dog's first photo (matches the listing card).
+    /// nil only if the dog has no photos at all.
+    let cover: MediaItem?
+    /// Remaining photos and videos, interleaved and ordered, shown as thumbs.
+    let thumbs: [MediaItem]
     let pedigree: Pedigree
     /// "Volver" link back to the dog's sex listing.
     let backURL: String
 }
 
-/// A named block with a grid of photos (a gallery, or a puppy litter).
+/// One cell in a media block: a photo or an embedded video. Puppies only ever
+/// produce photos; galleries can mix in videos (phase 2.3).
+struct MediaItem: Encodable {
+    /// "photo" or "video" — drives the template branch.
+    let kind: String
+    /// Lightbox target: the photo URL, or the video embed URL.
+    let href: String
+    /// Image shown in the grid: the photo, or a video thumbnail. Empty for a
+    /// video without a provider thumbnail (rendered as a placeholder tile).
+    let thumb: String
+    /// Embed URL for videos (mounted in an `<iframe>` by the lightbox); nil for
+    /// photos.
+    let embed: String?
+    let alt: String
+
+    static func photo(url: String, alt: String) -> MediaItem {
+        MediaItem(kind: "photo", href: url, thumb: url, embed: nil, alt: alt)
+    }
+
+    static func video(_ video: MediaVideo, alt: String) -> MediaItem {
+        MediaItem(kind: "video", href: video.embedURL, thumb: video.thumbURL ?? "", embed: video.embedURL, alt: alt)
+    }
+}
+
+/// A named block with a grid of media items (a gallery, or a puppy litter).
 struct MediaBlock: Encodable {
     let title: String
     /// Optional badge shown after the title (e.g. availability for puppies).
     let badge: String?
-    let photos: [String]
+    let items: [MediaItem]
 }
 
 /// Galleries page (`/galeria`, `/en/gallery`) and puppies page

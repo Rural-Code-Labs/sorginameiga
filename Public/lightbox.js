@@ -4,8 +4,8 @@
 // with JS disabled a click still opens the image. Uses event delegation so it
 // covers every photo link without per-image wiring.
 (function () {
-    var box, image, prevBtn, nextBtn;
-    var items = [];   // the current group's photo links
+    var box, image, videoWrap, frame, prevBtn, nextBtn;
+    var items = [];   // the current group's photo/video links
     var index = 0;
 
     // The photos navigable together: siblings within the same dog / gallery /
@@ -15,13 +15,29 @@
         return Array.prototype.slice.call(scope.querySelectorAll('[data-lightbox]'));
     }
 
+    // Stops video playback by detaching the iframe.
+    function clearVideo() {
+        frame.src = '';
+        videoWrap.hidden = true;
+    }
+
     function show(i) {
         var count = items.length;
         index = (i + count) % count;               // wrap around
         var link = items[index];
-        var thumb = link.querySelector('img');
-        image.src = link.getAttribute('href');
-        image.alt = thumb ? thumb.alt : '';
+        var video = link.getAttribute('data-video');
+        if (video) {
+            image.hidden = true;
+            // Autoplay the embed once it is on screen.
+            frame.src = video + (video.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1';
+            videoWrap.hidden = false;
+        } else {
+            clearVideo();
+            var thumb = link.querySelector('img');
+            image.src = link.getAttribute('href');
+            image.alt = thumb ? thumb.alt : '';
+            image.hidden = false;
+        }
     }
 
     function open(link) {
@@ -39,6 +55,7 @@
         box.hidden = true;
         box.setAttribute('aria-hidden', 'true');
         image.src = '';
+        clearVideo();
         items = [];
         document.body.classList.remove('lightbox-open');
     }
@@ -47,6 +64,8 @@
         box = document.getElementById('lightbox');
         if (!box) return;
         image = box.querySelector('.lightbox-img');
+        videoWrap = box.querySelector('.lightbox-video');
+        frame = box.querySelector('.lightbox-frame');
         prevBtn = box.querySelector('.lightbox-prev');
         nextBtn = box.querySelector('.lightbox-next');
 

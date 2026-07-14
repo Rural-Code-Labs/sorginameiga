@@ -15,12 +15,24 @@ final class GalleryController: RouteCollection, Sendable {
 
     private func render(_ language: Language, on req: Request) async throws -> View {
         let galleries = try await Gallery.query(on: req.db).sort(\.$position).all()
-        let blocks = galleries.map { gallery in
-            MediaBlock(
-                title: gallery.name,
-                badge: nil,
-                photos: PhotoDirectory.photos(in: "images/galerias/\(gallery.id ?? 0)", on: req)
-            )
+        var blocks: [MediaBlock] = []
+        for gallery in galleries {
+            let gid = gallery.id ?? 0
+            let subpath = "images/galerias/\(gid)"
+            let photoIndices = PhotoDirectory.indices(in: subpath, on: req)
+            let videos = try await MediaVideo.query(on: req.db)
+                .filter(\.$kind == PhotoKind.galleries.rawValue)
+                .filter(\.$entityID == gid)
+                .all()
+            let items = MediaLayout.merge(photoIndices: photoIndices, videos: videos).map { item -> MediaItem in
+                switch item {
+                case .photo(let index):
+                    return .photo(url: PhotoDirectory.url(in: subpath, index: index, on: req), alt: gallery.name)
+                case .video(let video):
+                    return .video(video, alt: gallery.name)
+                }
+            }
+            blocks.append(MediaBlock(title: gallery.name, badge: nil, items: items))
         }
 
         let translation = req.localization.translation(for: language)

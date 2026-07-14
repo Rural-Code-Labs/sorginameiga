@@ -1,6 +1,6 @@
 #extend("admin/layout"):
 #export("content"):
-<h1>Fotos · #(title)</h1>
+<h1>Fotos / Vídeos · #(title)</h1>
 <p><a class="admin_button secondary" href="#(backURL)">← Volver al listado</a></p>
 
 #if(error):
@@ -14,21 +14,39 @@
     <button type="submit" class="admin_button">Subir</button>
 </form>
 
-#if(count(photos) == 0):
-<p>No hay fotos todavía.</p>
+<form method="post" action="/admin/fotos/#(kind)/#(id)/video" class="upload_form">
+    <label>Añadir vídeo (URL de YouTube o Vimeo)
+        <input type="url" name="url" placeholder="https://www.youtube.com/watch?v=..." required>
+    </label>
+    <button type="submit" class="admin_button">Añadir vídeo</button>
+</form>
+
+#if(count(mediaItems) == 0):
+<p>No hay fotos ni vídeos todavía.</p>
 #else:
 <div class="photo_grid">
-    #for(photo in photos):
-    <div class="photo_cell">
-        <img src="#(photo.url)" alt="#(title)">
-        #if(photo.isMain):<span class="photo_main">principal</span>#endif
+    #for(item in mediaItems):
+    <div class="photo_cell #if(item.kind == "video"):is_video#endif">
+        #if(item.thumb):<img src="#(item.thumb)" alt="#(title)">#else:<div class="video_placeholder">Vídeo</div>#endif
+        #if(item.isMain):<span class="photo_main">principal</span>#elseif(item.kind == "video"):<span class="photo_main">vídeo</span>#endif
         <div class="photo_actions">
             <span class="admin_reorder">
-                #if(photo.isFirst):<span class="admin_button secondary is_disabled">←</span>#else:<form method="post" action="/admin/fotos/#(kind)/#(id)/izquierda/#(photo.index)" class="inline_form"><button type="submit" class="admin_button secondary" title="Mover a la izquierda">←</button></form>#endif
-                #if(photo.isLast):<span class="admin_button secondary is_disabled">→</span>#else:<form method="post" action="/admin/fotos/#(kind)/#(id)/derecha/#(photo.index)" class="inline_form"><button type="submit" class="admin_button secondary" title="Mover a la derecha">→</button></form>#endif
+                #if(item.isFirst):<span class="admin_button secondary is_disabled">←</span>#else:<form method="post" action="/admin/fotos/#(kind)/#(id)/mover/#(item.handle)/izquierda" class="inline_form"><button type="submit" class="admin_button secondary" title="Mover a la izquierda">←</button></form>#endif
+                #if(item.isLast):<span class="admin_button secondary is_disabled">→</span>#else:<form method="post" action="/admin/fotos/#(kind)/#(id)/mover/#(item.handle)/derecha" class="inline_form"><button type="submit" class="admin_button secondary" title="Mover a la derecha">→</button></form>#endif
             </span>
-            <form method="post" action="/admin/fotos/#(kind)/#(id)/borrar/#(photo.index)"
-                  onsubmit="return confirm('¿Borrar esta foto?');">
+            #if(item.kind == "video"):
+            <form method="post" action="#(item.editAction)" class="edit_form">
+                <input type="url" name="url" value="#(item.editURL)" required>
+                <button type="submit" class="admin_button secondary">Cambiar URL</button>
+            </form>
+            #else:
+            <form method="post" action="#(item.replaceAction)" enctype="multipart/form-data" class="edit_form">
+                <input type="file" name="file" accept="image/jpeg" required>
+                <button type="submit" class="admin_button secondary">Reemplazar</button>
+            </form>
+            #endif
+            <form method="post" action="#(item.deleteAction)"
+                  onsubmit="return confirm('¿Borrar este elemento?');">
                 <button type="submit" class="admin_button danger">Borrar</button>
             </form>
         </div>

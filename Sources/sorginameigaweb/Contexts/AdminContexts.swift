@@ -104,31 +104,49 @@ struct GalleryForm: Content {
     var name: String
 }
 
-// MARK: - Photos
+// MARK: - Photos & videos
 
-struct AdminPhotoItem: Encodable {
-    let index: Int
-    let url: String
-    /// True for a dog's main photo (the first one).
-    let isMain: Bool
-    /// Drive the ↑/↓ reorder buttons (hidden at the ends).
-    let isFirst: Bool
-    let isLast: Bool
-}
-
+/// Media management page (`/admin/fotos/:kind/:id`) for dogs, puppies and
+/// galleries: one combined, reorderable grid of photos and videos.
 struct AdminPhotosContext: Encodable {
     let username: String
     let kind: String
     let id: Int
     let title: String
-    let photos: [AdminPhotoItem]
     let backURL: String
     let error: String?
+    let mediaItems: [AdminMediaItem]
 }
 
-/// A single-file photo upload.
+/// A cell in the combined photo+video admin grid.
+struct AdminMediaItem: Encodable {
+    let kind: String          // "photo" | "video"
+    /// Reorder handle, e.g. "photo-3" / "video-7".
+    let handle: String
+    /// Thumbnail URL (empty for a video without a provider thumbnail).
+    let thumb: String
+    /// True for a dog's main/cover photo (the first one).
+    let isMain: Bool
+    /// Where the per-item delete form posts.
+    let deleteAction: String
+    /// Photos only: where the "replace file" form posts (empty for videos).
+    let replaceAction: String
+    /// Videos only: canonical URL used to pre-fill the "edit URL" form (empty
+    /// for photos) — also the POST target for the edit.
+    let editAction: String
+    let editURL: String
+    let isFirst: Bool
+    let isLast: Bool
+}
+
+/// A single-file photo upload (also used to replace an existing photo).
 struct PhotoUpload: Content {
     var file: File
+}
+
+/// Submitted "add / edit video" form: a pasted YouTube/Vimeo URL.
+struct VideoForm: Content {
+    var url: String
 }
 
 // MARK: - Dogs

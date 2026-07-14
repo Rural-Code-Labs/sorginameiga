@@ -44,6 +44,7 @@ func configure(_ app: Application) async throws {
         username: "Pilar&Estibaliz",
         password: Environment.get("ADMIN_PASSWORD") ?? "changeme"
     ))
+    app.migrations.add(CreateMediaVideos())
 
     // Shared, request-independent localization service.
     app.localization = LocalizationService()

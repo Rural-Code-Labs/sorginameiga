@@ -18,7 +18,7 @@
         </span>
         <span class="admin_list_name">#(gallery.name)</span>
         <span class="admin_list_actions">
-            <a class="admin_button secondary" href="/admin/fotos/galerias/#(gallery.id)">Fotos</a>
+            <a class="admin_button secondary" href="/admin/fotos/galerias/#(gallery.id)">Fotos / Vídeos</a>
             <a class="admin_button" href="/admin/galerias/#(gallery.id)/editar">Editar</a>
             <form method="post" action="/admin/galerias/#(gallery.id)/borrar" class="inline_form"
                   onsubmit="return confirm('¿Borrar la galería #(gallery.name)?');">

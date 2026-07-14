@@ -336,6 +336,35 @@ h1 { font-size: 26px; margin: 0 0 20px; }
     margin-top: 8px;
 }
 .photo_actions form { margin-top: 0; }
+/* Compact in-place edit forms (replace photo / change video URL) — phase 2.3 */
+.edit_form { display: flex; flex-direction: column; gap: 4px; width: 150px; }
+.edit_form input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 11px;
+    padding: 5px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+/* Gallery videos (phase 2.3): placeholder tile when the provider has no static
+   thumbnail (Vimeo). */
+.video_placeholder {
+    width: 150px;
+    height: 150px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
 
 @media (max-width: 560px) {
     #admin_header { justify-content: center; text-align: center; }

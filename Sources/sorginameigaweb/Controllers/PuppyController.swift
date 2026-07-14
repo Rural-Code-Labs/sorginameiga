@@ -16,12 +16,28 @@ final class PuppyController: RouteCollection, Sendable {
     private func render(_ language: Language, on req: Request) async throws -> View {
         let puppies = try await Puppy.query(on: req.db).sort(\.$position).all()
         let translation = req.localization.translation(for: language)
-        let blocks = puppies.map { puppy in
-            MediaBlock(
+        var blocks: [MediaBlock] = []
+        for puppy in puppies {
+            let pid = puppy.id ?? 0
+            let subpath = "images/cachorros/\(pid)"
+            let photoIndices = PhotoDirectory.indices(in: subpath, on: req)
+            let videos = try await MediaVideo.query(on: req.db)
+                .filter(\.$kind == PhotoKind.puppies.rawValue)
+                .filter(\.$entityID == pid)
+                .all()
+            let items = MediaLayout.merge(photoIndices: photoIndices, videos: videos).map { item -> MediaItem in
+                switch item {
+                case let .photo(index):
+                    return .photo(url: PhotoDirectory.url(in: subpath, index: index, on: req), alt: puppy.name)
+                case let .video(video):
+                    return .video(video, alt: puppy.name)
+                }
+            }
+            blocks.append(MediaBlock(
                 title: puppy.name,
                 badge: puppy.available ? translation.available : translation.unavailable,
-                photos: PhotoDirectory.photos(in: "images/cachorros/\(puppy.id ?? 0)", on: req)
-            )
+                items: items
+            ))
         }
 
         let layout = await PageLayout.build(

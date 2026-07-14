@@ -61,6 +61,9 @@
             <button class="lightbox-close" type="button" aria-label="#(layout.t.close)">&times;</button>
             <button class="lightbox-nav lightbox-prev" type="button" aria-label="#(layout.t.previous)" hidden>&lsaquo;</button>
             <img class="lightbox-img" src="" alt="">
+            <div class="lightbox-video" hidden>
+                <iframe class="lightbox-frame" src="" title="#(layout.t.gallery)" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
             <button class="lightbox-nav lightbox-next" type="button" aria-label="#(layout.t.next)" hidden>&rsaquo;</button>
         </div>
 

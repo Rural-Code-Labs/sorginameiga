@@ -85,12 +85,34 @@ final class DogController: RouteCollection, Sendable {
         let listing = listingURLs(sex: dog.sexValue ?? .female)
         let backURL = language == .esp ? listing.0 : listing.1
 
+        // Combine the dog's photos and videos. The large cover is always the
+        // first photo (the listing card uses the same 0.jpg); every other item
+        // — photos and videos, interleaved — becomes a thumbnail.
+        let subpath = "images/\(id)"
+        let photoIndices = PhotoDirectory.indices(in: subpath, on: req)
+        let videos = try await MediaVideo.query(on: req.db)
+            .filter(\.$kind == PhotoKind.dogs.rawValue)
+            .filter(\.$entityID == id)
+            .all()
+        var cover: MediaItem?
+        var thumbs: [MediaItem] = []
+        for item in MediaLayout.merge(photoIndices: photoIndices, videos: videos) {
+            switch item {
+            case let .photo(index):
+                let photo = MediaItem.photo(url: PhotoDirectory.url(in: subpath, index: index, on: req), alt: dog.name)
+                if cover == nil { cover = photo } else { thumbs.append(photo) }
+            case let .video(video):
+                thumbs.append(.video(video, alt: dog.name))
+            }
+        }
+
         return try await req.view.render(
             "dog",
             DogDetailContext(
                 layout: layout,
                 name: dog.name,
-                photos: PhotoDirectory.photos(in: "images/\(id)", on: req),
+                cover: cover,
+                thumbs: thumbs,
                 pedigree: dog.pedigree,
                 backURL: backURL
             )

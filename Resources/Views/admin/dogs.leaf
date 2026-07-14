@@ -19,7 +19,7 @@
         </span>
         <span class="admin_list_name">#(dog.name)</span>
         <span class="admin_list_actions">
-            <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos</a>
+            <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos / Vídeos</a>
             <a class="admin_button" href="/admin/perros/#(dog.id)/editar">Editar</a>
             <form method="post" action="/admin/perros/#(dog.id)/borrar" class="inline_form"
                   onsubmit="return confirm('¿Borrar a #(dog.name)?');">
@@ -44,7 +44,7 @@
         </span>
         <span class="admin_list_name">#(dog.name)</span>
         <span class="admin_list_actions">
-            <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos</a>
+            <a class="admin_button secondary" href="/admin/fotos/perros/#(dog.id)">Fotos / Vídeos</a>
             <a class="admin_button" href="/admin/perros/#(dog.id)/editar">Editar</a>
             <form method="post" action="/admin/perros/#(dog.id)/borrar" class="inline_form"
                   onsubmit="return confirm('¿Borrar a #(dog.name)?');">

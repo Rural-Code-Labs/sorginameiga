@@ -67,6 +67,18 @@ the known problems of the legacy code are deliberately **not** reproduced.
   storage is denied until the visitor accepts a bilingual cookie banner
   (`Analytics` service, banner in `base.leaf`). With the variable unset, no tag
   or banner is emitted; the admin area is never tracked.
+- **Media: photos + embedded videos (v2.3).** Dogs, puppies and galleries can
+  mix **embedded YouTube/Vimeo videos** in with their photos. Videos are not
+  files — they are provider references stored in `media_videos` (`MediaVideo`,
+  keyed by the same `(kind, entityID)` pair the photos use). A pure `MediaLayout`
+  helper merges the file-based photos and the DB videos into one ordered list
+  (`VideoEmbed.parse` normalizes the pasted URL to a provider + id) and decides
+  the ←/→ reorder mutation, so a video can be moved across the photos. On the
+  public side videos render as a thumbnail with a ▶ badge and open in the same
+  lightbox via an `<iframe>`; for dogs the large cover always stays the first
+  photo (the listing card uses it). The admin can also **edit in place** without
+  re-adding: replace a photo's file or change a video's URL, keeping its
+  position.
 
 ### Data model
 
@@ -75,6 +87,7 @@ the known problems of the legacy code are deliberately **not** reproduced.
 | `Dog` | `dogs` | `name`, `sex` (`macho`/`hembra`), `pedigree` (JSON), `position` |
 | `Puppy` | `puppies` | `name`, `available`, `position` |
 | `Gallery` | `galleries` | `name`, `position` |
+| `MediaVideo` | `media_videos` | embedded YouTube/Vimeo video for a dog/puppy/gallery: `kind`, `entityID`, `provider`, `videoRef`, `photosBefore`, `sortOrder` |
 | `VisitCounter` | `visit_counter` | single row; site-wide visit count |
 
 `position` is the admin-controlled display order (lower shows first). Photos
@@ -89,20 +102,20 @@ for dogs `0.jpg` is the cover photo.
 | `/machos`, `/hembras` · `/en/males`, `/en/females` | Dog listings by sex |
 | `/perro/:id` · `/en/dog/:id` | Dog detail + pedigree |
 | `/cachorros` · `/en/puppies` | Puppies with availability |
-| `/galeria` · `/en/gallery` | Photo galleries |
+| `/galeria` · `/en/gallery` | Multimedia galleries (photos + videos) |
 | `/contacto` · `/en/contact` | Contact details |
 | `/admin/login` · `/admin` | Admin login + dashboard |
 | `/admin/{perros,cachorros,galerias}` | CRUD + reorder (protected) |
-| `/admin/fotos/:kind/:id` | Photo management + reorder (protected) |
+| `/admin/fotos/:kind/:id` | Photos + videos: upload/add, replace/edit, delete, reorder (protected) |
 
 ## Project structure
 
 ```
 Sources/sorginameigaweb/
-├── Models/          Fluent models + Pedigree, Language, Translation
+├── Models/          Fluent models (Dog, Puppy, Gallery, MediaVideo, …) + Pedigree, Language, Translation
 ├── Migrations/      schema + legacy data seed
 ├── Seed/            LegacySeed loader (reads Resources/seed/legacy.json)
-├── Services/        LocalizationService, PageLayout, PhotoStorage, PhotoDirectory, SocialLinks
+├── Services/        LocalizationService, PageLayout, PhotoStorage, PhotoDirectory, SocialLinks, VideoEmbed, MediaLayout
 ├── Controllers/     public (Home, Dog, Gallery, Puppy, Contact) + admin (Dog, Puppy, Gallery, Photo)
 ├── Contexts/        Encodable view contexts
 ├── configure.swift  app/DB/migrations wiring
@@ -190,6 +203,7 @@ the legacy database (now decommissioned).
 | 10 | Production backups — daily database `pg_dump` to GCS + image bucket versioning | ✅ Done |
 | 11 | Domain + DNS cutover to `sorginameiga.com` (managed HTTPS, legacy decommissioned) | ✅ Done |
 | 12 | Analytics (v2.2) — Google Analytics 4 behind a cookie-consent banner (Consent Mode v2); site-wide orthography review | ✅ Done |
+| 13 | Multimedia galleries (v2.3) — embedded YouTube/Vimeo videos mixed with photos on dogs/puppies/galleries; in-place editing (replace photo / change video URL); mobile cookie-banner fix | ✅ Done |
 
 The site is **live in production** at **https://sorginameiga.com** on Google
 Cloud Run (`europe-west1`), with Google-managed SSL. The legacy PHP/MySQL host

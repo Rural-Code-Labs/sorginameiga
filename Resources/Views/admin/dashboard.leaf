@@ -12,7 +12,22 @@
     <h2>Notas de versión</h2>
 
     <article class="version">
-        <h3>Versión 2.2 <span class="version-date">[Julio 2026] · Actual</span></h3>
+        <h3>Versión 2.3 <span class="version-date">[14 de julio de 2026] · Actual</span></h3>
+        <p class="version-scope">En la web</p>
+        <ul>
+            <li>Ahora se pueden mostrar <strong>vídeos</strong> (de YouTube o Vimeo) en las galerías, los perros y los cachorros, mezclados con las fotos.</li>
+            <li>La «Galería de fotos» pasa a llamarse <strong>«Galería Multimedia»</strong>.</li>
+            <li>Arreglado el tamaño del <strong>aviso de cookies en el móvil</strong> (se veía demasiado grande).</li>
+        </ul>
+        <p class="version-scope">En Administración</p>
+        <ul>
+            <li><strong>Añadir vídeos</strong> pegando la dirección (URL) del vídeo de YouTube o Vimeo, y ordenarlos junto a las fotos.</li>
+            <li><strong>Editar fotos y vídeos ya publicados</strong> sin borrarlos: reemplazar una foto por otra, o cambiar la URL de un vídeo, manteniendo su posición.</li>
+        </ul>
+    </article>
+
+    <article class="version">
+        <h3>Versión 2.2 <span class="version-date">[6 de julio de 2026]</span></h3>
         <p class="version-scope">En la web</p>
         <ul>
             <li><strong>Analítica de visitas</strong> con Google Analytics.</li>
@@ -22,7 +37,7 @@
     </article>
 
     <article class="version">
-        <h3>Versión 2.1 <span class="version-date">[Julio 2026]</span></h3>
+        <h3>Versión 2.1 <span class="version-date">[2 de julio de 2026]</span></h3>
         <p class="version-scope">En la web</p>
         <ul>
             <li>Enlaces a <strong>Instagram y Facebook</strong> en la cabecera.</li>
@@ -36,7 +51,7 @@
     </article>
 
     <article class="version">
-        <h3>Versión 2.0 <span class="version-date">[2026]</span></h3>
+        <h3>Versión 2.0 <span class="version-date">[6 de julio de 2026]</span></h3>
         <p class="version-scope">Renovación completa</p>
         <ul>
             <li><strong>Migración completa</strong> de PHP a Swift/Vapor, contenerizada.</li>
