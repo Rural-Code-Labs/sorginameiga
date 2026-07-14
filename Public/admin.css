@@ -246,6 +246,23 @@ h1 { font-size: 26px; margin: 0 0 20px; }
 .stats-chart .chart-max,
 .stats-chart .chart-xlabel { fill: var(--muted); font-size: 11px; }
 .stats_footnote { font-size: 12px; color: var(--muted); margin-top: 14px; }
+.stats_breakdowns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+.stats_table_box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+}
+.stats_table { width: 100%; border-collapse: collapse; }
+.stats_table td { padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.stats_table tr:last-child td { border-bottom: 0; }
+.stats_table td.num { text-align: right; font-weight: 700; color: var(--accent-dark); white-space: nowrap; padding-left: 12px; }
 
 /* ---------- Lists ---------- */
 .admin_list { list-style: none; padding: 0; margin: 20px 0; }

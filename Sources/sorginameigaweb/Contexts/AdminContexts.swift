@@ -166,6 +166,10 @@ struct AdminStatsContext: Encodable {
     let activeNow: Int
     /// Pre-rendered inline SVG of the 30-day trend (output with `#unsafeHTML`).
     let chartSVG: String
+    /// Step 2 breakdowns (last 30 days).
+    let topPages: [LabelCount]
+    let countries: [LabelCount]
+    let devices: [LabelCount]
 }
 
 // MARK: - Dogs

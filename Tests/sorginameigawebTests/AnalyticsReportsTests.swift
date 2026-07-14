@@ -43,6 +43,20 @@ struct AnalyticsReportsTests {
         #expect(AnalyticsReports.parseScalar(try decode(json)) == 4)
     }
 
+    @Test("Parses (label, count) rows preserving order; maps device names")
+    func parsesPairs() throws {
+        let json = """
+        { "rows": [
+          { "dimensionValues": [{"value":"mobile"}], "metricValues": [{"value":"20"}] },
+          { "dimensionValues": [{"value":"desktop"}], "metricValues": [{"value":"12"}] }
+        ] }
+        """
+        let pairs = AnalyticsReports.parsePairs(try decode(json))
+        #expect(pairs == [LabelCount(label: "mobile", value: 20), LabelCount(label: "desktop", value: 12)])
+        #expect(AnalyticsReports.prettyDevice("mobile") == "Móvil")
+        #expect(AnalyticsReports.prettyDevice("desktop") == "Escritorio")
+    }
+
     @Test("Overview totals: 30-day sum, 7-day sum, today by date match")
     func aggregatesOverview() {
         // 10 days, 1 session each; today is the last date.

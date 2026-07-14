@@ -32,6 +32,30 @@
     #unsafeHTML(chartSVG)
 </section>
 
+<div class="stats_breakdowns">
+    <section class="stats_table_box">
+        <h2 class="stats_chart_title">Páginas más vistas · 30 días</h2>
+        #if(count(topPages) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
+        <table class="stats_table">
+            #for(row in topPages):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
+        </table>#endif
+    </section>
+    <section class="stats_table_box">
+        <h2 class="stats_chart_title">Países · 30 días</h2>
+        #if(count(countries) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
+        <table class="stats_table">
+            #for(row in countries):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
+        </table>#endif
+    </section>
+    <section class="stats_table_box">
+        <h2 class="stats_chart_title">Dispositivos · 30 días</h2>
+        #if(count(devices) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
+        <table class="stats_table">
+            #for(row in devices):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
+        </table>#endif
+    </section>
+</div>
+
 <p class="stats_footnote">Datos de Google Analytics. «Visitas» = sesiones. Las cifras de hoy pueden estar incompletas y se actualizan a lo largo del día.</p>
 #endif
 #endexport

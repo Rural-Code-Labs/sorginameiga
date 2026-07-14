@@ -17,7 +17,7 @@ final class AdminStatsController: RouteCollection, Sendable {
         guard service.enabled else {
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: false, error: nil, hasData: false,
-                today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: ""))
+                today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: "", topPages: [], countries: [], devices: []))
         }
 
         do {
@@ -25,13 +25,14 @@ final class AdminStatsController: RouteCollection, Sendable {
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: true, error: nil, hasData: true,
                 today: o.today, last7: o.last7, last30: o.last30, activeNow: o.activeNow,
-                chartSVG: StatsChart.bars(o.daily)))
+                chartSVG: StatsChart.bars(o.daily),
+                topPages: o.topPages, countries: o.countries, devices: o.devices))
         } catch {
             req.logger.report(error: error)
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: true,
                 error: "No se pudieron cargar los datos de Google Analytics. Inténtalo de nuevo en unos minutos.",
-                hasData: false, today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: ""))
+                hasData: false, today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: "", topPages: [], countries: [], devices: []))
         }
     }
 }

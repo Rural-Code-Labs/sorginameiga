@@ -45,7 +45,21 @@ final class AnalyticsReports: Sendable {
         let activeNow = Self.parseScalar(try await runRealtime(
             RunRealtimeRequest(metrics: [.init(name: "activeUsers")]), token: token, on: client))
 
-        let overview = Self.overview(daily: daily, today: Self.todayString(), activeNow: activeNow)
+        func top(_ dimension: String, metric: String, limit: Int) async throws -> [LabelCount] {
+            Self.parsePairs(try await runReport(RunReportRequest(
+                dateRanges: [.init(startDate: "30daysAgo", endDate: "today")],
+                dimensions: [.init(name: dimension)],
+                metrics: [.init(name: metric)],
+                orderBys: [.init(metric: .init(metricName: metric), desc: true)],
+                limit: limit), token: token, on: client))
+        }
+        let topPages = try await top("pageTitle", metric: "screenPageViews", limit: 8)
+        let countries = try await top("country", metric: "sessions", limit: 6)
+        let devices = try await top("deviceCategory", metric: "sessions", limit: 4)
+            .map { LabelCount(label: Self.prettyDevice($0.label), value: $0.value) }
+
+        let overview = Self.overview(daily: daily, today: Self.todayString(), activeNow: activeNow,
+                                     topPages: topPages, countries: countries, devices: devices)
         await cache.store(overview)
         return overview
     }
@@ -88,15 +102,36 @@ final class AnalyticsReports: Sendable {
         Int(resp.rows?.first?.metricValues?.first?.value ?? "0") ?? 0
     }
 
+    /// Rows of (dimension label, metric value), preserving the API's order.
+    static func parsePairs(_ resp: RunReportResponse) -> [LabelCount] {
+        (resp.rows ?? []).compactMap { row in
+            guard let label = row.dimensionValues?.first?.value,
+                  let raw = row.metricValues?.first?.value, let value = Int(raw) else { return nil }
+            return LabelCount(label: label, value: value)
+        }
+    }
+
+    static func prettyDevice(_ category: String) -> String {
+        switch category.lowercased() {
+        case "desktop": return "Escritorio"
+        case "mobile": return "Móvil"
+        case "tablet": return "Tablet"
+        default: return category.capitalized
+        }
+    }
+
     /// Builds the overview from the daily series. `today` is `yyyyMMdd` in the
     /// property's timezone; if GA has no row for it yet (no visits), today = 0.
-    static func overview(daily: [DailyPoint], today: String, activeNow: Int) -> AnalyticsOverview {
+    static func overview(daily: [DailyPoint], today: String, activeNow: Int,
+                         topPages: [LabelCount] = [], countries: [LabelCount] = [],
+                         devices: [LabelCount] = []) -> AnalyticsOverview {
         AnalyticsOverview(
             daily: daily,
             today: daily.first(where: { $0.date == today })?.sessions ?? 0,
             last7: daily.suffix(7).reduce(0) { $0 + $1.sessions },
             last30: daily.reduce(0) { $0 + $1.sessions },
-            activeNow: activeNow
+            activeNow: activeNow,
+            topPages: topPages, countries: countries, devices: devices
         )
     }
 
@@ -117,12 +152,21 @@ struct DailyPoint: Encodable, Equatable {
     let sessions: Int
 }
 
+/// A dimension value with its count (top pages, countries, devices).
+struct LabelCount: Encodable, Equatable {
+    let label: String
+    let value: Int
+}
+
 struct AnalyticsOverview {
     let daily: [DailyPoint]
     let today: Int
     let last7: Int
     let last30: Int
     let activeNow: Int
+    var topPages: [LabelCount] = []
+    var countries: [LabelCount] = []
+    var devices: [LabelCount] = []
 }
 
 // MARK: - GA4 Data API request/response shapes
@@ -133,12 +177,16 @@ struct RunReportRequest: Content {
     struct Metric: Content { let name: String }
     struct OrderBy: Content {
         struct Dim: Content { let dimensionName: String }
-        let dimension: Dim
+        struct Met: Content { let metricName: String }
+        var dimension: Dim? = nil
+        var metric: Met? = nil
+        var desc: Bool? = nil
     }
     let dateRanges: [DateRange]
     let dimensions: [Dimension]
     let metrics: [Metric]
     var orderBys: [OrderBy]? = nil
+    var limit: Int? = nil
 }
 
 struct RunRealtimeRequest: Content {
