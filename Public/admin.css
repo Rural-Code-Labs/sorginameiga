@@ -210,6 +210,23 @@ h1 { font-size: 26px; margin: 0 0 20px; }
     padding: 16px 20px;
     color: var(--muted);
 }
+.stats_legacy_box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    box-shadow: var(--shadow);
+    margin: 20px 0 16px;
+}
+.stats_legacy_box .stats_notice { background: none; border: none; padding: 8px 0 0; }
+.stats_legacy_number {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent-dark);
+    margin: 0;
+}
+.stats_scope_note { border-left: 4px solid var(--accent); margin: 0 0 24px; }
 .stats_kpis {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

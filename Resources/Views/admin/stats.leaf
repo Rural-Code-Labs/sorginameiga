@@ -3,6 +3,18 @@
 <h1>Estadísticas de visitas</h1>
 <p><a class="admin_button secondary" href="/admin">← Volver al panel</a></p>
 
+<section class="stats_legacy_box">
+    <h2 class="stats_chart_title">Contador histórico de la web</h2>
+    #if(legacyCount):
+    <p class="stats_legacy_number">#(legacyCount)</p>
+    #else:
+    <p class="stats_legacy_number">—</p>
+    #endif
+    <p class="stats_notice">Es el contador de visitas que aparece en la web pública. Cuenta el número de <strong>impresiones de página</strong> (cada vez que se carga una página) acumuladas <strong>desde el nacimiento de la web</strong>, hace 13 años. No distingue usuarios: suma todas las cargas, con o sin cookies.</p>
+</section>
+
+<p class="stats_notice stats_scope_note">⚠️ Los datos de esta página <strong>no</strong> son ese contador. Provienen de Google Analytics y solo abarcan <strong>desde mediados de julio de 2026</strong>. Además, cuantifican únicamente a los <strong>usuarios individuales que aceptan las cookies</strong> en la web pública al entrar; quien las rechaza no se contabiliza aquí.</p>
+
 #if(!configured):
 <p class="stats_notice">La analítica no está configurada en este entorno. Los datos de Google Analytics se ven en la web publicada.</p>
 #elseif(error):

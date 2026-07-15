@@ -160,6 +160,10 @@ struct AdminStatsContext: Encodable {
     let error: String?
     /// True when we have real data to show (configured, no error).
     let hasData: Bool
+    /// Legacy site-wide visit counter (the number shown in the public footer):
+    /// total page views accumulated since the site's birth. nil if the DB read
+    /// fails. Independent from the Google Analytics figures below.
+    let legacyCount: Int?
     let today: Int
     let last7: Int
     let last30: Int

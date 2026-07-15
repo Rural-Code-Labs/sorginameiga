@@ -1,3 +1,4 @@
+import Fluent
 import Vapor
 
 /// Admin stats page (`/admin/estadisticas`): shows Google Analytics visit data
@@ -14,9 +15,14 @@ final class AdminStatsController: RouteCollection, Sendable {
         let admin = try req.auth.require(Admin.self)
         let service = req.analyticsReports
 
+        // Legacy site-wide counter (public footer total). Best-effort read: the
+        // page still renders if the DB is unavailable.
+        let legacyCount = try? await VisitCounter.find(VisitCounter.singletonID, on: req.db)?.count
+
         guard service.enabled else {
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: false, error: nil, hasData: false,
+                legacyCount: legacyCount,
                 today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: "", topPages: [], countries: [], devices: []))
         }
 
@@ -24,6 +30,7 @@ final class AdminStatsController: RouteCollection, Sendable {
             let o = try await service.overview(on: req.client, logger: req.logger)
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: true, error: nil, hasData: true,
+                legacyCount: legacyCount,
                 today: o.today, last7: o.last7, last30: o.last30, activeNow: o.activeNow,
                 chartSVG: StatsChart.bars(o.daily),
                 topPages: o.topPages, countries: o.countries, devices: o.devices))
@@ -32,7 +39,8 @@ final class AdminStatsController: RouteCollection, Sendable {
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: true,
                 error: "No se pudieron cargar los datos de Google Analytics. Inténtalo de nuevo en unos minutos.",
-                hasData: false, today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: "", topPages: [], countries: [], devices: []))
+                hasData: false, legacyCount: legacyCount,
+                today: 0, last7: 0, last30: 0, activeNow: 0, chartSVG: "", topPages: [], countries: [], devices: []))
         }
     }
 }
