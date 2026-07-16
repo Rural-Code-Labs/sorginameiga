@@ -44,32 +44,47 @@
 </div>
 
 <section class="stats_chart_box">
-    <h2 class="stats_chart_title">Visitas por día · últimos 30 días</h2>
-    #unsafeHTML(chartSVG)
+    <div class="stats_chart_head">
+        <h2 class="stats_chart_title">Visitas por mes · #(selectedYear)</h2>
+        #if(count(years) > 1):
+        <form method="get" action="/admin/estadisticas" class="stats_year_form">
+            <label for="year_select">Año:</label>
+            <select id="year_select" name="year" onchange="this.form.submit()">
+                #for(y in years):<option value="#(y.year)"#if(y.selected): selected#endif>#(y.year)</option>#endfor
+            </select>
+            <noscript><button type="submit" class="admin_button secondary">Ver</button></noscript>
+        </form>
+        #endif
+    </div>
+    #unsafeHTML(monthlyChartSVG)
+    <p class="stats_hint">Haz clic en un mes para ver su detalle abajo.</p>
 </section>
 
 <section class="stats_chart_box">
-    <h2 class="stats_chart_title">Visitas por mes · últimos 12 meses</h2>
-    #unsafeHTML(monthlyChartSVG)
+    <div class="stats_chart_head">
+        <h2 class="stats_chart_title">Visitas por día · #(rangeLabel) · #(rangeTotal) visitas</h2>
+        #if(selectedMonth):<a class="admin_button secondary" href="/admin/estadisticas?year=#(selectedYear)">← Volver a últimos 30 días</a>#endif
+    </div>
+    #unsafeHTML(chartSVG)
 </section>
 
 <div class="stats_breakdowns">
     <section class="stats_table_box">
-        <h2 class="stats_chart_title">Fuentes de tráfico · 30 días</h2>
+        <h2 class="stats_chart_title">Fuentes de tráfico · #(rangeLabel)</h2>
         #if(count(channels) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
         <table class="stats_table">
             #for(row in channels):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
         </table>#endif
     </section>
     <section class="stats_table_box">
-        <h2 class="stats_chart_title">Países · 30 días</h2>
+        <h2 class="stats_chart_title">Países · #(rangeLabel)</h2>
         #if(count(countries) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
         <table class="stats_table">
             #for(row in countries):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
         </table>#endif
     </section>
     <section class="stats_table_box">
-        <h2 class="stats_chart_title">Dispositivos · 30 días</h2>
+        <h2 class="stats_chart_title">Dispositivos · #(rangeLabel)</h2>
         #if(count(devices) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
         <table class="stats_table">
             #for(row in devices):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor

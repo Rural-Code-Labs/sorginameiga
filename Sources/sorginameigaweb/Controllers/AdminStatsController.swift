@@ -20,30 +20,28 @@ final class AdminStatsController: RouteCollection, Sendable {
         let legacyCount = try? await VisitCounter.find(VisitCounter.singletonID, on: req.db)?.count
 
         guard service.enabled else {
-            return try await req.view.render("admin/stats", AdminStatsContext(
-                username: admin.username, configured: false, error: nil, hasData: false,
-                legacyCount: legacyCount,
-                today: 0, last7: 0, last30: 0, lastYear: 0, activeNow: 0,
-                chartSVG: "", monthlyChartSVG: "", countries: [], channels: [], devices: []))
+            return try await req.view.render("admin/stats", AdminStatsContext.empty(
+                username: admin.username, legacyCount: legacyCount, configured: false, error: nil))
         }
 
         do {
-            let o = try await service.overview(on: req.client, logger: req.logger)
+            let v = try await service.stats(month: req.query["month"], year: req.query["year"],
+                                            on: req.client, logger: req.logger)
             return try await req.view.render("admin/stats", AdminStatsContext(
                 username: admin.username, configured: true, error: nil, hasData: true,
                 legacyCount: legacyCount,
-                today: o.today, last7: o.last7, last30: o.last30, lastYear: o.lastYear, activeNow: o.activeNow,
-                chartSVG: StatsChart.bars(o.daily),
-                monthlyChartSVG: StatsChart.monthlyBars(o.monthly),
-                countries: o.countries, channels: o.channels, devices: o.devices))
+                today: v.today, last7: v.last7, last30: v.last30, lastYear: v.lastYear, activeNow: v.activeNow,
+                chartSVG: StatsChart.bars(v.daily),
+                monthlyChartSVG: StatsChart.monthlyBars(v.monthly, selectedMonth: v.selectedMonth, year: v.selectedYear),
+                rangeLabel: v.rangeLabel, rangeTotal: v.rangeTotal, selectedMonth: v.selectedMonth,
+                selectedYear: v.selectedYear,
+                years: v.years.map { YearOption(year: $0, selected: $0 == v.selectedYear) },
+                countries: v.countries, channels: v.channels, devices: v.devices))
         } catch {
             req.logger.report(error: error)
-            return try await req.view.render("admin/stats", AdminStatsContext(
-                username: admin.username, configured: true,
-                error: "No se pudieron cargar los datos de Google Analytics. Inténtalo de nuevo en unos minutos.",
-                hasData: false, legacyCount: legacyCount,
-                today: 0, last7: 0, last30: 0, lastYear: 0, activeNow: 0,
-                chartSVG: "", monthlyChartSVG: "", countries: [], channels: [], devices: []))
+            return try await req.view.render("admin/stats", AdminStatsContext.empty(
+                username: admin.username, legacyCount: legacyCount, configured: true,
+                error: "No se pudieron cargar los datos de Google Analytics. Inténtalo de nuevo en unos minutos."))
         }
     }
 }
@@ -90,9 +88,10 @@ enum StatsChart {
         return svg
     }
 
-    /// Same bar chart for the 12-month yearly series. Fewer bars → a label under
-    /// every month.
-    static func monthlyBars(_ monthly: [MonthlyPoint]) -> String {
+    /// Bar chart for a calendar year's monthly series. Each bar is a link that
+    /// drills into that month (`?month=yyyyMM&year=…`); the selected month is
+    /// highlighted. Fewer bars → a label under every month.
+    static func monthlyBars(_ monthly: [MonthlyPoint], selectedMonth: String?, year: Int) -> String {
         let w = 720.0, h = 200.0
         let padL = 8.0, padR = 8.0, padT = 18.0, padB = 22.0
         let baseline = h - padB
@@ -103,7 +102,7 @@ enum StatsChart {
         let barW = max(slot - 8, 1)
         let maxVal = max(monthly.map(\.sessions).max() ?? 0, 1)
 
-        var svg = #"<svg class="stats-chart" viewBox="0 0 \#(Int(w)) \#(Int(h))" role="img" preserveAspectRatio="none" aria-label="Visitas por mes en los últimos 12 meses">"#
+        var svg = #"<svg class="stats-chart" viewBox="0 0 \#(Int(w)) \#(Int(h))" role="img" preserveAspectRatio="none" aria-label="Visitas por mes en \#(year)">"#
         svg += #"<line x1="\#(padL)" y1="\#(baseline)" x2="\#(w - padR)" y2="\#(baseline)" class="chart-axis"/>"#
         svg += #"<text x="\#(padL)" y="\#(padT - 5)" class="chart-max">máx \#(maxVal)</text>"#
 
@@ -111,7 +110,14 @@ enum StatsChart {
             let barH = Double(point.sessions) / Double(maxVal) * plotH
             let x = padL + Double(i) * slot + (slot - barW) / 2
             let y = baseline - barH
-            svg += #"<rect x="\#(round2(x))" y="\#(round2(y))" width="\#(round2(barW))" height="\#(round2(barH))" rx="2" class="chart-bar"><title>\#(monthLabel(point.month)): \#(point.sessions) visitas</title></rect>"#
+            let selected = point.month == selectedMonth
+            let cls = selected ? "chart-bar chart-bar--selected" : "chart-bar"
+            let href = "/admin/estadisticas?month=\(point.month)&year=\(year)"
+            // Full-height hit area so short/empty months are still clickable.
+            svg += #"<a href="\#(href)" class="chart-link">"#
+            svg += #"<rect x="\#(round2(x))" y="\#(round2(padT))" width="\#(round2(barW))" height="\#(round2(plotH))" class="chart-hit"/>"#
+            svg += #"<rect x="\#(round2(x))" y="\#(round2(y))" width="\#(round2(barW))" height="\#(round2(barH))" rx="2" class="\#(cls)"><title>\#(monthLabel(point.month)): \#(point.sessions) visitas</title></rect>"#
+            svg += "</a>"
             let lx = padL + Double(i) * slot + slot / 2
             svg += #"<text x="\#(round2(lx))" y="\#(h - 6)" class="chart-xlabel" text-anchor="middle">\#(monthShort(point.month))</text>"#
         }

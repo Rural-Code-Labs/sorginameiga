@@ -151,6 +151,12 @@ struct VideoForm: Content {
 
 // MARK: - Stats
 
+/// One option in the year selector.
+struct YearOption: Encodable {
+    let year: Int
+    let selected: Bool
+}
+
 /// Admin stats page (`/admin/estadisticas`): Google Analytics visit data.
 struct AdminStatsContext: Encodable {
     let username: String
@@ -164,20 +170,41 @@ struct AdminStatsContext: Encodable {
     /// total page views accumulated since the site's birth. nil if the DB read
     /// fails. Independent from the Google Analytics figures below.
     let legacyCount: Int?
+    // KPIs — current snapshot.
     let today: Int
     let last7: Int
     let last30: Int
-    /// Total sessions over the last 12 months (sum of the monthly series).
+    /// Total sessions over the rolling last 12 months.
     let lastYear: Int
     let activeNow: Int
-    /// Pre-rendered inline SVG of the 30-day trend (output with `#unsafeHTML`).
+    /// Pre-rendered inline SVG of the daily trend for the selected range.
     let chartSVG: String
-    /// Pre-rendered inline SVG of the 12-month trend.
+    /// Pre-rendered inline SVG of the yearly (monthly) trend; bars link to months.
     let monthlyChartSVG: String
-    /// Breakdowns (last 30 days). Countries carry a flag emoji in `label`.
+    /// Label of the selected daily range ("Junio 2026" or "Últimos 30 días").
+    let rangeLabel: String
+    /// Total sessions in the selected daily range.
+    let rangeTotal: Int
+    /// The drilled-into month ("yyyyMM"), or nil for the 30-day default.
+    let selectedMonth: String?
+    /// Calendar year shown in the monthly chart, and the selector options.
+    let selectedYear: Int
+    let years: [YearOption]
+    /// Breakdowns for the selected range. Countries carry a flag in `label`.
     let countries: [LabelCount]
     let channels: [LabelCount]
     let devices: [LabelCount]
+
+    /// The not-configured / error render (no data).
+    static func empty(username: String, legacyCount: Int?, configured: Bool, error: String?) -> AdminStatsContext {
+        AdminStatsContext(
+            username: username, configured: configured, error: error, hasData: false,
+            legacyCount: legacyCount,
+            today: 0, last7: 0, last30: 0, lastYear: 0, activeNow: 0,
+            chartSVG: "", monthlyChartSVG: "", rangeLabel: "", rangeTotal: 0,
+            selectedMonth: nil, selectedYear: 0, years: [],
+            countries: [], channels: [], devices: [])
+    }
 }
 
 // MARK: - Dogs

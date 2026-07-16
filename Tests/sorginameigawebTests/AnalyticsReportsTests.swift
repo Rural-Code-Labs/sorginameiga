@@ -138,14 +138,70 @@ struct AnalyticsReportsTests {
         #expect(AnalyticsReports.prettyChannel("Organic Social") == "Redes sociales")
     }
 
-    @Test("Monthly chart SVG renders one bar per month with month labels")
+    @Test("Monthly chart SVG links each month and highlights the selected one")
     func monthlyChartSVG() {
         let monthly = [MonthlyPoint(month: "202606", sessions: 4), MonthlyPoint(month: "202607", sessions: 8)]
-        let svg = StatsChart.monthlyBars(monthly)
+        let svg = StatsChart.monthlyBars(monthly, selectedMonth: "202607", year: 2026)
         #expect(svg.hasPrefix("<svg"))
         #expect(svg.hasSuffix("</svg>"))
         #expect(svg.contains("máx 8"))
         #expect(svg.contains("jul 2026: 8 visitas"))
-        #expect(svg.components(separatedBy: "<rect").count - 1 == 2)
+        // one drill-down link per month
+        #expect(svg.contains(#"href="/admin/estadisticas?month=202606&year=2026""#))
+        #expect(svg.contains(#"href="/admin/estadisticas?month=202607&year=2026""#))
+        #expect(svg.contains("chart-bar--selected"))
+    }
+
+    private var refDate: Date {
+        // 2026-07-16 12:00 Europe/Madrid.
+        var c = DateComponents(); c.year = 2026; c.month = 7; c.day = 16; c.hour = 12
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Europe/Madrid")!
+        return cal.date(from: c)!
+    }
+
+    @Test("Month range spans the whole month, capping the current month at today")
+    func monthRange() {
+        // A fully past month → first..last day.
+        let past = AnalyticsReports.monthRange("202606", today: refDate)
+        #expect(past?.start == "2026-06-01")
+        #expect(past?.end == "2026-06-30")
+        // The current month → capped at today.
+        let current = AnalyticsReports.monthRange("202607", today: refDate)
+        #expect(current?.start == "2026-07-01")
+        #expect(current?.end == "2026-07-16")
+        // Malformed / future.
+        #expect(AnalyticsReports.monthRange("2026", today: refDate) == nil)
+        #expect(AnalyticsReports.monthRange("202699", today: refDate) == nil)
+        #expect(AnalyticsReports.monthRange("202612", today: refDate) == nil) // future month
+    }
+
+    @Test("Year range caps the current year at today; past years are full")
+    func yearRange() {
+        let current = AnalyticsReports.yearRange(2026, today: refDate)
+        #expect(current.start == "2026-01-01")
+        #expect(current.end == "2026-07-16")
+    }
+
+    @Test("Available years run gaFirstYear…currentYear, newest first")
+    func availableYears() {
+        #expect(AnalyticsReports.availableYears(today: refDate) == [2026])
+    }
+
+    @Test("Month / year query params are sanitized")
+    func sanitize() {
+        #expect(AnalyticsReports.sanitizeMonth("202606", today: refDate) == "202606")
+        #expect(AnalyticsReports.sanitizeMonth("2026-06", today: refDate) == nil)
+        #expect(AnalyticsReports.sanitizeMonth("202512", today: refDate) == nil) // before GA data
+        #expect(AnalyticsReports.sanitizeMonth(nil, today: refDate) == nil)
+        #expect(AnalyticsReports.sanitizeYear("2026", today: refDate) == 2026)
+        #expect(AnalyticsReports.sanitizeYear("1999", today: refDate) == 2026) // out of range → default
+        #expect(AnalyticsReports.sanitizeYear(nil, today: refDate) == 2026)
+    }
+
+    @Test("Month title is the Spanish full month + year")
+    func monthTitle() {
+        #expect(AnalyticsReports.monthTitle("202606") == "Junio 2026")
+        #expect(AnalyticsReports.monthTitle("202601") == "Enero 2026")
     }
 }

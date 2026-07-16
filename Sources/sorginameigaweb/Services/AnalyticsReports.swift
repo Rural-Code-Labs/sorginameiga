@@ -12,6 +12,10 @@ import Vapor
 /// smoke tests), or the Cloud Run metadata server (production; the service
 /// account must be a Viewer on the GA property). No key files.
 final class AnalyticsReports: Sendable {
+    /// First calendar year with GA data (analytics went live mid-July 2026).
+    /// Bounds the year selector.
+    static let gaFirstYear = 2026
+
     let propertyID: String
     var enabled: Bool { !propertyID.isEmpty }
 
@@ -28,58 +32,95 @@ final class AnalyticsReports: Sendable {
 
     // MARK: - Public API
 
-    /// Visits overview: a 30-day daily series plus today / 7-day / 30-day totals
-    /// and the current real-time active users. Cached ~10 min.
-    func overview(on client: any Client, logger: Logger) async throws -> AnalyticsOverview {
-        if let cached = await cache.value() { return cached }
+    /// The stats page data. Always includes the current KPIs (today / 7-day /
+    /// 30-day / rolling year / realtime). The daily series + breakdowns cover a
+    /// selected month (drill-down) or the last 30 days by default; the monthly
+    /// chart covers a selected calendar year (default: current year). Cached
+    /// ~10 min per (month, year) selection.
+    func stats(month rawMonth: String?, year rawYear: String?,
+               on client: any Client, logger: Logger) async throws -> StatsView {
+        let now = Date()
+        // Resolve + validate the selection (guards against bad query strings).
+        let selectedMonth = Self.sanitizeMonth(rawMonth, today: now)
+        let selectedYear = Self.sanitizeYear(rawYear, today: now)
+        let years = Self.availableYears(today: now)
+
+        // Daily range: the selected month, or the last 30 days.
+        let dailyRange = selectedMonth.flatMap { Self.monthRange($0, today: now) }
+            ?? (start: "30daysAgo", end: "today")
+        let yearRange = Self.yearRange(selectedYear, today: now)
+
+        let cacheKey = "\(selectedMonth ?? "-")|\(selectedYear)"
+        if let cached = await cache.value(for: cacheKey) { return cached }
 
         let token = try await tokens.token(on: client, logger: logger)
-        let daily = Self.parseDaily(try await runReport(
-            RunReportRequest(
-                dateRanges: [.init(startDate: "30daysAgo", endDate: "today")],
-                dimensions: [.init(name: "date")],
-                metrics: [.init(name: "sessions")],
-                orderBys: [.init(dimension: .init(dimensionName: "date"))]
-            ), token: token, on: client))
 
-        // Monthly series for the last 12 months (also the source of the year total).
-        let monthly = Self.parseMonthly(try await runReport(
-            RunReportRequest(
-                dateRanges: [.init(startDate: "365daysAgo", endDate: "today")],
-                dimensions: [.init(name: "yearMonth")],
-                metrics: [.init(name: "sessions")],
-                orderBys: [.init(dimension: .init(dimensionName: "yearMonth"))]
-            ), token: token, on: client))
-
-        let activeNow = Self.parseScalar(try await runRealtime(
-            RunRealtimeRequest(metrics: [.init(name: "activeUsers")]), token: token, on: client))
-
-        // Countries: request the ISO code alongside the name so we can show a flag.
-        let countries = Self.parseCountries(try await runReport(RunReportRequest(
-            dateRanges: [.init(startDate: "30daysAgo", endDate: "today")],
-            dimensions: [.init(name: "country"), .init(name: "countryId")],
-            metrics: [.init(name: "sessions")],
-            orderBys: [.init(metric: .init(metricName: "sessions"), desc: true)],
-            limit: 6), token: token, on: client))
-
-        func top(_ dimension: String, metric: String, limit: Int) async throws -> [LabelCount] {
-            Self.parsePairs(try await runReport(RunReportRequest(
-                dateRanges: [.init(startDate: "30daysAgo", endDate: "today")],
-                dimensions: [.init(name: dimension)],
-                metrics: [.init(name: metric)],
-                orderBys: [.init(metric: .init(metricName: metric), desc: true)],
-                limit: limit), token: token, on: client))
+        func report(_ req: RunReportRequest) async throws -> RunReportResponse {
+            try await runReport(req, token: token, on: client)
         }
-        let channels = try await top("sessionDefaultChannelGroup", metric: "sessions", limit: 6)
-            .map { LabelCount(label: Self.prettyChannel($0.label), value: $0.value) }
-        let devices = try await top("deviceCategory", metric: "sessions", limit: 4)
-            .map { LabelCount(label: Self.prettyDevice($0.label), value: $0.value) }
+        func series(_ dim: String, order: RunReportRequest.OrderBy) -> RunReportRequest {
+            RunReportRequest(dateRanges: [.init(startDate: dailyRange.start, endDate: dailyRange.end)],
+                             dimensions: [.init(name: dim)], metrics: [.init(name: "sessions")], orderBys: [order])
+        }
+        func topReq(_ dim: String) -> RunReportRequest {
+            var r = series(dim, order: .init(metric: .init(metricName: "sessions"), desc: true))
+            r.limit = 6
+            return r
+        }
 
-        let overview = Self.overview(daily: daily, monthly: monthly, today: Self.todayString(),
-                                     activeNow: activeNow, countries: countries,
-                                     channels: channels, devices: devices)
-        await cache.store(overview)
-        return overview
+        // Fire the independent reports in parallel.
+        async let dailyResp = report(series("date", order: .init(dimension: .init(dimensionName: "date"))))
+        async let yearScalarResp = report(RunReportRequest(
+            dateRanges: [.init(startDate: "365daysAgo", endDate: "today")],
+            dimensions: [], metrics: [.init(name: "sessions")]))
+        async let monthlyResp = report(RunReportRequest(
+            dateRanges: [.init(startDate: yearRange.start, endDate: yearRange.end)],
+            dimensions: [.init(name: "yearMonth")], metrics: [.init(name: "sessions")],
+            orderBys: [.init(dimension: .init(dimensionName: "yearMonth"))]))
+        async let countriesResp = report({
+            var r = RunReportRequest(dateRanges: [.init(startDate: dailyRange.start, endDate: dailyRange.end)],
+                dimensions: [.init(name: "country"), .init(name: "countryId")],
+                metrics: [.init(name: "sessions")],
+                orderBys: [.init(metric: .init(metricName: "sessions"), desc: true)])
+            r.limit = 6
+            return r
+        }())
+        async let channelsResp = report(topReq("sessionDefaultChannelGroup"))
+        async let devicesResp = report(topReq("deviceCategory"))
+        async let activeResp = runRealtime(RunRealtimeRequest(metrics: [.init(name: "activeUsers")]),
+                                           token: token, on: client)
+
+        let daily = Self.parseDaily(try await dailyResp)
+        // KPIs always cover the last 30 days. In the default view that IS the
+        // daily range (reuse it); only a month drill-down needs a separate query.
+        let kpiDaily: [DailyPoint]
+        if selectedMonth == nil {
+            kpiDaily = daily
+        } else {
+            kpiDaily = Self.parseDaily(try await report(RunReportRequest(
+                dateRanges: [.init(startDate: "30daysAgo", endDate: "today")],
+                dimensions: [.init(name: "date")], metrics: [.init(name: "sessions")],
+                orderBys: [.init(dimension: .init(dimensionName: "date"))])))
+        }
+        let activeNow = Self.parseScalar(try await activeResp)
+        let kpi = Self.overview(daily: kpiDaily, today: Self.todayString(), activeNow: activeNow)
+        let channels = Self.parsePairs(try await channelsResp).map {
+            LabelCount(label: Self.prettyChannel($0.label), value: $0.value) }
+        let devices = Self.parsePairs(try await devicesResp).map {
+            LabelCount(label: Self.prettyDevice($0.label), value: $0.value) }
+
+        let view = StatsView(
+            today: kpi.today, last7: kpi.last7, last30: kpi.last30,
+            lastYear: Self.parseScalar(try await yearScalarResp), activeNow: activeNow,
+            daily: daily,
+            selectedMonth: selectedMonth,
+            rangeLabel: selectedMonth.map(Self.monthTitle) ?? "Últimos 30 días",
+            countries: Self.parseCountries(try await countriesResp),
+            channels: channels, devices: devices,
+            monthly: Self.parseMonthly(try await monthlyResp),
+            selectedYear: selectedYear, years: years)
+        await cache.store(view, for: cacheKey)
+        return view
     }
 
     // MARK: - HTTP
@@ -247,6 +288,70 @@ final class AnalyticsReports: Sendable {
         f.dateFormat = "yyyyMMdd"
         return f.string(from: Date())
     }
+
+    // MARK: - Selection ranges & validation (unit-tested)
+
+    private static func calendar(_ timeZone: String) -> Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: timeZone) ?? .current
+        return cal
+    }
+
+    private static func ymd(_ date: Date, _ cal: Calendar) -> String {
+        let c = cal.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
+    /// GA date range (YYYY-MM-DD) for a "YYYYMM" month, end capped at `today`.
+    /// nil for a malformed code or a month entirely in the future.
+    static func monthRange(_ yyyymm: String, today: Date, timeZone: String = "Europe/Madrid") -> (start: String, end: String)? {
+        guard yyyymm.count == 6, let y = Int(yyyymm.prefix(4)),
+              let m = Int(yyyymm.suffix(2)), (1...12).contains(m) else { return nil }
+        let cal = calendar(timeZone)
+        guard let start = cal.date(from: DateComponents(year: y, month: m, day: 1)),
+              let dayRange = cal.range(of: .day, in: .month, for: start),
+              let monthEnd = cal.date(from: DateComponents(year: y, month: m, day: dayRange.count)) else { return nil }
+        let end = min(monthEnd, today)
+        guard end >= start else { return nil }
+        return (ymd(start, cal), ymd(end, cal))
+    }
+
+    /// GA date range for a calendar year, end capped at `today`.
+    static func yearRange(_ year: Int, today: Date, timeZone: String = "Europe/Madrid") -> (start: String, end: String) {
+        let cal = calendar(timeZone)
+        let start = cal.date(from: DateComponents(year: year, month: 1, day: 1)) ?? today
+        let yearEnd = cal.date(from: DateComponents(year: year, month: 12, day: 31)) ?? today
+        return (ymd(start, cal), ymd(min(yearEnd, today), cal))
+    }
+
+    /// Years offered in the selector: gaFirstYear…currentYear, newest first.
+    static func availableYears(today: Date, timeZone: String = "Europe/Madrid") -> [Int] {
+        let current = calendar(timeZone).component(.year, from: today)
+        return Array(stride(from: max(current, gaFirstYear), through: gaFirstYear, by: -1))
+    }
+
+    /// A valid "YYYYMM" within the data window, else nil (→ default 30-day view).
+    static func sanitizeMonth(_ raw: String?, today: Date, timeZone: String = "Europe/Madrid") -> String? {
+        guard let raw, raw.count == 6, raw.allSatisfy(\.isNumber),
+              monthRange(raw, today: today, timeZone: timeZone) != nil,
+              let y = Int(raw.prefix(4)), y >= gaFirstYear else { return nil }
+        return raw
+    }
+
+    /// A valid year clamped to the selector range, else the current year.
+    static func sanitizeYear(_ raw: String?, today: Date, timeZone: String = "Europe/Madrid") -> Int {
+        let years = availableYears(today: today, timeZone: timeZone)
+        if let raw, let y = Int(raw), years.contains(y) { return y }
+        return years.first ?? gaFirstYear
+    }
+
+    /// "YYYYMM" → "Junio 2026" (Spanish full month + year).
+    static func monthTitle(_ yyyymm: String) -> String {
+        guard yyyymm.count == 6, let m = Int(yyyymm.suffix(2)), (1...12).contains(m) else { return yyyymm }
+        let names = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+        return "\(names[m]) \(yyyymm.prefix(4))"
+    }
 }
 
 // MARK: - Value types
@@ -280,6 +385,31 @@ struct AnalyticsOverview {
     var countries: [LabelCount] = []
     var channels: [LabelCount] = []
     var devices: [LabelCount] = []
+}
+
+/// Everything the stats page renders. KPIs are the current snapshot; `daily` +
+/// breakdowns cover the selected month (or last 30 days); `monthly` covers the
+/// selected calendar year.
+struct StatsView {
+    // KPIs — current snapshot, independent of the selection.
+    let today: Int
+    let last7: Int
+    let last30: Int
+    let lastYear: Int
+    let activeNow: Int
+    // Selected daily range + its breakdowns.
+    let daily: [DailyPoint]
+    let selectedMonth: String?   // "yyyyMM" when drilled into a month, else nil
+    let rangeLabel: String       // "Junio 2026" or "Últimos 30 días"
+    let countries: [LabelCount]
+    let channels: [LabelCount]
+    let devices: [LabelCount]
+    // Monthly chart for the selected year.
+    let monthly: [MonthlyPoint]
+    let selectedYear: Int
+    let years: [Int]
+
+    var rangeTotal: Int { daily.reduce(0) { $0 + $1.sessions } }
 }
 
 // MARK: - GA4 Data API request/response shapes
@@ -351,17 +481,18 @@ private actor TokenCache {
     }
 }
 
-/// Caches the overview for a few minutes (the admin is low-traffic; avoid
-/// hitting the API on every page load).
+/// Caches stats views per (month, year) selection for a few minutes (the admin
+/// is low-traffic; avoid hitting the API on every page load).
 private actor OverviewCache {
-    private var cached: AnalyticsOverview?
-    private var expiry: Date = .distantPast
+    private var cached: [String: (view: StatsView, expiry: Date)] = [:]
     private let ttl: TimeInterval = 600
 
-    func value() -> AnalyticsOverview? { expiry > Date() ? cached : nil }
-    func store(_ overview: AnalyticsOverview) {
-        cached = overview
-        expiry = Date().addingTimeInterval(ttl)
+    func value(for key: String) -> StatsView? {
+        guard let entry = cached[key], entry.expiry > Date() else { return nil }
+        return entry.view
+    }
+    func store(_ view: StatsView, for key: String) {
+        cached[key] = (view, Date().addingTimeInterval(ttl))
     }
 }
 

@@ -500,4 +500,32 @@ struct sorginameigawebTests {
             })
         }
     }
+
+    /// Renders the stats Leaf template with a fully-populated context (no GA
+    /// call) to catch template syntax errors in the drill-down / year-selector
+    /// markup, which the not-configured branch never exercises.
+    @Test("Stats template renders the drill-down view without errors")
+    func statsTemplateRenders() async throws {
+        try await withApp { app in
+            let ctx = AdminStatsContext(
+                username: "Tester", configured: true, error: nil, hasData: true, legacyCount: 446369,
+                today: 3, last7: 21, last30: 90, lastYear: 1200, activeNow: 1,
+                chartSVG: "<svg></svg>", monthlyChartSVG: "<svg><a href=\"/admin/estadisticas?month=202606&year=2026\"></a></svg>",
+                rangeLabel: "Junio 2026", rangeTotal: 42, selectedMonth: "202606", selectedYear: 2026,
+                years: [YearOption(year: 2027, selected: false), YearOption(year: 2026, selected: true)],
+                countries: [LabelCount(label: "🇪🇸 España", value: 30)],
+                channels: [LabelCount(label: "Búsquedas en Google", value: 25)],
+                devices: [LabelCount(label: "Móvil", value: 40)])
+            let view = try await app.view.render("admin/stats", ctx)
+            let html = String(buffer: view.data)
+            #expect(html.contains("Visitas por mes · 2026"))
+            #expect(html.contains("Haz clic en un mes"))
+            #expect(html.contains("Visitas por día · Junio 2026 · 42 visitas"))
+            #expect(html.contains("Volver a últimos 30 días"))
+            #expect(html.contains("Fuentes de tráfico · Junio 2026"))
+            #expect(html.contains("🇪🇸 España"))
+            #expect(html.contains("id=\"year_select\""))     // selector shown (2 years)
+            #expect(html.contains("value=\"2026\" selected"))
+        }
+    }
 }
