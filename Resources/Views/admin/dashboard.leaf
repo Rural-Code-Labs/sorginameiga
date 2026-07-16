@@ -13,7 +13,19 @@
     <h2>Notas de versión</h2>
 
     <article class="version">
-        <h3>Versión 2.3 <span class="version-date">[14 de julio de 2026] · Actual</span></h3>
+        <h3>Versión 2.4 <span class="version-date">[17 de julio de 2026] · Actual</span></h3>
+        <p class="version-scope">En Administración — Estadísticas de visitas</p>
+        <ul>
+            <li>El panel ahora explica la diferencia entre el <strong>contador histórico</strong> de la web (impresiones de página acumuladas desde su nacimiento) y los datos de Google Analytics, que solo abarcan <strong>desde mediados de julio de 2026</strong> y solo cuentan a quienes <strong>aceptan las cookies</strong>.</li>
+            <li>Los <strong>países</strong> se muestran con su <strong>bandera</strong>.</li>
+            <li>Nuevo dato de <strong>«Último año»</strong> y una <strong>gráfica por meses</strong>, con selector de año (aparecerá cuando haya más de un año de datos).</li>
+            <li>Nueva tabla de <strong>fuentes de tráfico</strong> (cómo llegan las visitas: búsquedas en Google, directo, redes sociales…), en lugar de «páginas más vistas».</li>
+            <li>Al <strong>hacer clic en un mes</strong> de la gráfica se ve su detalle: visitas por día y sus fuentes, países y dispositivos de ese mes.</li>
+        </ul>
+    </article>
+
+    <article class="version">
+        <h3>Versión 2.3 <span class="version-date">[14 de julio de 2026]</span></h3>
         <p class="version-scope">En la web</p>
         <ul>
             <li>Ahora se pueden mostrar <strong>vídeos</strong> (de YouTube o Vimeo) en las galerías, los perros y los cachorros, mezclados con las fotos.</li>

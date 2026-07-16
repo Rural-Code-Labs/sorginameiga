@@ -79,15 +79,24 @@ the known problems of the legacy code are deliberately **not** reproduced.
   photo (the listing card uses it). The admin can also **edit in place** without
   re-adding: replace a photo's file or change a video's URL, keeping its
   position.
-- **Admin analytics dashboard (v2.3).** `/admin/estadisticas` shows the site's
-  Google Analytics numbers inside the panel (the owners don't use
-  analytics.google.com): a visits summary (now / today / 7-day / 30-day), a
-  hand-rolled inline-SVG 30-day trend chart, and top pages / countries / devices.
-  `AnalyticsReports` reads the **GA4 Data API**; the OAuth token comes from the
-  Cloud Run metadata server (the runtime service account is a Viewer on the GA
-  property) or a `GA_ACCESS_TOKEN` override for local runs — no key files.
-  Disabled unless `GA_PROPERTY_ID` is set (then the page shows a "not configured"
-  notice); response parsing is pure and unit-tested.
+- **Admin analytics dashboard (v2.3, expanded in v2.4).** `/admin/estadisticas`
+  shows the site's Google Analytics numbers inside the panel (the owners don't
+  use analytics.google.com). It first contrasts the **legacy visit counter**
+  (the public footer's all-time page impressions since the site's birth) with
+  the GA figures, which only cover **since mid-July 2026** and only count
+  cookie-accepting users. It then shows a visits summary (now / today / 7-day /
+  30-day / rolling year), a hand-rolled inline-SVG **daily trend**, a **per-month
+  bar chart for a calendar year** (a year selector appears once more than one
+  year of data exists), and breakdowns of **traffic sources**, **countries (with
+  flags)** and **devices**. **Clicking a month** drills in: the daily chart and
+  the three breakdowns switch to that month's data. Drill-down is server-side
+  via `?month=YYYYMM&year=YYYY` (inputs sanitized; current month/year capped at
+  today). `AnalyticsReports` reads the **GA4 Data API** (reports run in parallel,
+  cached per selection); the OAuth token comes from the Cloud Run metadata server
+  (the runtime service account is a Viewer on the GA property) or a
+  `GA_ACCESS_TOKEN` override for local runs — no key files. Disabled unless
+  `GA_PROPERTY_ID` is set (then the page shows a "not configured" notice);
+  response parsing plus the range/label/flag logic are pure and unit-tested.
 
 ### Data model
 
@@ -116,7 +125,7 @@ for dogs `0.jpg` is the cover photo.
 | `/admin/login` · `/admin` | Admin login + dashboard |
 | `/admin/{perros,cachorros,galerias}` | CRUD + reorder (protected) |
 | `/admin/fotos/:kind/:id` | Photos + videos: upload/add, replace/edit, delete, reorder (protected) |
-| `/admin/estadisticas` | Google Analytics visits dashboard (protected) |
+| `/admin/estadisticas` | Google Analytics visits dashboard with month drill-down (protected) |
 
 ## Project structure
 
@@ -183,9 +192,12 @@ The database connection is read from environment variables (defaults match the
 In production a single `DATABASE_URL` (the Neon pooled connection string, with
 `sslmode=require`) takes precedence over the individual `DATABASE_*` vars.
 Optional overrides: `ADMIN_PASSWORD` (seeds the admin password on first migrate),
-`INSTAGRAM_URL` / `FACEBOOK_URL` (header social links), and `GA_MEASUREMENT_ID`
+`INSTAGRAM_URL` / `FACEBOOK_URL` (header social links), `GA_MEASUREMENT_ID`
 (a GA4 Measurement ID, e.g. `G-XXXXXXXXXX`, that enables Google Analytics on the
-public site behind a cookie-consent banner; analytics is off when it is unset).
+public site behind a cookie-consent banner; analytics is off when it is unset),
+and `GA_PROPERTY_ID` (the numeric GA4 property id that enables the admin
+`/admin/estadisticas` dashboard via the GA4 Data API; the page shows a
+"not configured" notice when it is unset).
 
 ## Database & seed data
 
@@ -215,6 +227,7 @@ the legacy database (now decommissioned).
 | 12 | Analytics (v2.2) — Google Analytics 4 behind a cookie-consent banner (Consent Mode v2); site-wide orthography review | ✅ Done |
 | 13 | Multimedia galleries (v2.3) — embedded YouTube/Vimeo videos mixed with photos on dogs/puppies/galleries; in-place editing (replace photo / change video URL); mobile cookie-banner fix | ✅ Done |
 | 14 | Admin analytics (v2.3) — Google Analytics visits dashboard in the panel (`/admin/estadisticas`): summary, trend chart, top pages/countries/devices via the GA4 Data API | ✅ Done |
+| 15 | Stats rework (v2.4) — legacy-counter vs GA explanation, countries with flags, rolling-year KPI + per-year monthly chart with year selector, traffic sources, and month drill-down (daily + breakdowns per month) | ✅ Done |
 
 The site is **live in production** at **https://sorginameiga.com** on Google
 Cloud Run (`europe-west1`), with Google-managed SSL. The legacy PHP/MySQL host
