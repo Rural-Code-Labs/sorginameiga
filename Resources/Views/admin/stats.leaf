@@ -37,6 +37,10 @@
         <span class="kpi_value">#(last30)</span>
         <span class="kpi_label">Últimos 30 días</span>
     </div>
+    <div class="kpi kpi_main">
+        <span class="kpi_value">#(lastYear)</span>
+        <span class="kpi_label">Último año</span>
+    </div>
 </div>
 
 <section class="stats_chart_box">
@@ -44,12 +48,17 @@
     #unsafeHTML(chartSVG)
 </section>
 
+<section class="stats_chart_box">
+    <h2 class="stats_chart_title">Visitas por mes · últimos 12 meses</h2>
+    #unsafeHTML(monthlyChartSVG)
+</section>
+
 <div class="stats_breakdowns">
     <section class="stats_table_box">
-        <h2 class="stats_chart_title">Páginas más vistas · 30 días</h2>
-        #if(count(topPages) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
+        <h2 class="stats_chart_title">Fuentes de tráfico · 30 días</h2>
+        #if(count(channels) == 0):<p class="stats_notice">Sin datos todavía.</p>#else:
         <table class="stats_table">
-            #for(row in topPages):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
+            #for(row in channels):<tr><td>#(row.label)</td><td class="num">#(row.value)</td></tr>#endfor
         </table>#endif
     </section>
     <section class="stats_table_box">

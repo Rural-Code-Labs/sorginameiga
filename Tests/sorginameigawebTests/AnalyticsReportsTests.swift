@@ -87,4 +87,65 @@ struct AnalyticsReportsTests {
         // one <rect> bar per day
         #expect(svg.components(separatedBy: "<rect").count - 1 == 2)
     }
+
+    @Test("Parses the yearMonth/sessions response into a sorted monthly series")
+    func parsesMonthly() throws {
+        let json = """
+        { "rows": [
+          { "dimensionValues": [{"value":"202607"}], "metricValues": [{"value":"7"}] },
+          { "dimensionValues": [{"value":"202605"}], "metricValues": [{"value":"3"}] },
+          { "dimensionValues": [{"value":"202606"}], "metricValues": [{"value":"5"}] }
+        ] }
+        """
+        #expect(AnalyticsReports.parseMonthly(try decode(json)) == [
+            MonthlyPoint(month: "202605", sessions: 3),
+            MonthlyPoint(month: "202606", sessions: 5),
+            MonthlyPoint(month: "202607", sessions: 7),
+        ])
+    }
+
+    @Test("Year total is the sum of the monthly series")
+    func aggregatesYear() {
+        let daily = [DailyPoint(date: "20260710", sessions: 1)]
+        let monthly = [MonthlyPoint(month: "202606", sessions: 40), MonthlyPoint(month: "202607", sessions: 60)]
+        let o = AnalyticsReports.overview(daily: daily, monthly: monthly, today: "20260710", activeNow: 0)
+        #expect(o.lastYear == 100)
+    }
+
+    @Test("Countries get a flag + Spanish name from the ISO code")
+    func parsesCountries() throws {
+        let json = """
+        { "rows": [
+          { "dimensionValues": [{"value":"Spain"},{"value":"ES"}], "metricValues": [{"value":"30"}] },
+          { "dimensionValues": [{"value":"Ruritania"},{"value":"(not set)"}], "metricValues": [{"value":"2"}] }
+        ] }
+        """
+        let rows = AnalyticsReports.parseCountries(try decode(json))
+        #expect(rows == [
+            LabelCount(label: "🇪🇸 España", value: 30),
+            LabelCount(label: "Ruritania", value: 2),   // invalid code → no flag, GA name kept
+        ])
+    }
+
+    @Test("Flag emoji and channel names map as expected")
+    func flagsAndChannels() {
+        #expect(AnalyticsReports.flagEmoji("ES") == "🇪🇸")
+        #expect(AnalyticsReports.flagEmoji("us") == "🇺🇸")
+        #expect(AnalyticsReports.flagEmoji("ZZ") == "")
+        #expect(AnalyticsReports.flagEmoji("(not set)") == "")
+        #expect(AnalyticsReports.prettyChannel("Organic Search") == "Búsquedas en Google")
+        #expect(AnalyticsReports.prettyChannel("Direct") == "Directo")
+        #expect(AnalyticsReports.prettyChannel("Organic Social") == "Redes sociales")
+    }
+
+    @Test("Monthly chart SVG renders one bar per month with month labels")
+    func monthlyChartSVG() {
+        let monthly = [MonthlyPoint(month: "202606", sessions: 4), MonthlyPoint(month: "202607", sessions: 8)]
+        let svg = StatsChart.monthlyBars(monthly)
+        #expect(svg.hasPrefix("<svg"))
+        #expect(svg.hasSuffix("</svg>"))
+        #expect(svg.contains("máx 8"))
+        #expect(svg.contains("jul 2026: 8 visitas"))
+        #expect(svg.components(separatedBy: "<rect").count - 1 == 2)
+    }
 }

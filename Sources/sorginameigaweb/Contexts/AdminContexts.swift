@@ -167,12 +167,16 @@ struct AdminStatsContext: Encodable {
     let today: Int
     let last7: Int
     let last30: Int
+    /// Total sessions over the last 12 months (sum of the monthly series).
+    let lastYear: Int
     let activeNow: Int
     /// Pre-rendered inline SVG of the 30-day trend (output with `#unsafeHTML`).
     let chartSVG: String
-    /// Step 2 breakdowns (last 30 days).
-    let topPages: [LabelCount]
+    /// Pre-rendered inline SVG of the 12-month trend.
+    let monthlyChartSVG: String
+    /// Breakdowns (last 30 days). Countries carry a flag emoji in `label`.
     let countries: [LabelCount]
+    let channels: [LabelCount]
     let devices: [LabelCount]
 }
 

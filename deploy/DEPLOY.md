@@ -56,11 +56,35 @@ cloud (native amd64) rather than cross-compiling on the ARM Mac:
 ```bash
 gcloud artifacts repositories create sorginameiga \
     --repository-format=docker --location="$REGION"
-
-gcloud builds submit --region="$REGION" \
-    --tag="$REGION-docker.pkg.dev/$PROJECT_ID/sorginameiga/web:latest" \
-    --timeout=2400s --machine-type=e2-highcpu-8
 ```
+
+**Two build paths** — pick by what changed. Both use `--machine-type=e2-highcpu-8`
+(the build is a CPU-bound full `swift build -c release`; 8 vCPUs ≈ 7 min, the
+default 1-vCPU machine ≈ 26 min — never omit the flag):
+
+- **Fast path — source-only change** (no `Package.swift`/`Package.resolved` edits).
+  Reuses the apt + `swift package resolve` layers from the Kaniko cache (~1-2 min
+  saved; the compile still reruns because `COPY . .` sits above it):
+
+  ```bash
+  gcloud builds submit --region="$REGION" \
+      --config=cloudbuild.yaml --project="$PROJECT_ID"
+  ```
+
+- **Clean path — dependency change** (you edited `Package.swift`/`Package.resolved`)
+  **or when in doubt.** Skip the cache: once dependencies change, the cached
+  dependency layer and everything below it is invalid, so the cache buys nothing
+  and the extra cache pull is wasted time. Plain full build:
+
+  ```bash
+  gcloud builds submit --region="$REGION" \
+      --tag="$REGION-docker.pkg.dev/$PROJECT_ID/sorginameiga/web:latest" \
+      --timeout=2400s --machine-type=e2-highcpu-8
+  ```
+
+The cache is always *correct* either way (Kaniko invalidates changed layers
+automatically — a stale-dependency image can't happen); the caveat is purely
+about whether the cache saves time. See `cloudbuild.yaml` for details.
 
 (A GitHub Actions pipeline can replace this later — see step 8g/optional.)
 

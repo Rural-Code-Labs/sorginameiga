@@ -1,0 +1,34 @@
+# Cloud Build config for the Sorgiña Meiga web image (fast path).
+#
+# Two levers matter here:
+#   1. machineType E2_HIGHCPU_8 — the build is a full `swift build -c release`
+#      and is CPU-bound. On 8 vCPUs it takes ~7 min; on the default 1-vCPU
+#      machine it took ~26 min (2026-07-15). ALWAYS build on the big machine.
+#   2. Kaniko layer cache (--cache=true) — reuses unchanged layers from a
+#      previous build stored in Artifact Registry (`.../sorginameiga/cache`).
+#
+# WHAT THE CACHE ACTUALLY BUYS (Dockerfile layer order):
+#   apt deps → COPY Package.* → `swift package resolve` → COPY . . → `swift build`
+#   * Change only Swift source → the apt + dependency-resolve layers are reused
+#     (~1-2 min saved); the compile itself STILL reruns, because `COPY . .`
+#     upstream of it is invalidated by any source change.
+#   * Change Package.swift / Package.resolved → the dependency layer and
+#     EVERYTHING below it is invalidated, so the cache buys nothing. Kaniko
+#     detects this automatically and rebuilds safely (you never get a
+#     stale-dependency image), but there is no speed-up. On dependency
+#     changes prefer the plain clean build in DEPLOY.md (no cache, no wasted
+#     cache pull) instead of this config.
+#
+# Invoke (small source-only change → fast path):
+#   gcloud builds submit --region=europe-west3 --config=cloudbuild.yaml \
+#     --project=sorgina-meiga
+steps:
+  - name: gcr.io/kaniko-project/executor:latest
+    args:
+      - --destination=europe-west3-docker.pkg.dev/$PROJECT_ID/sorginameiga/web:latest
+      - --cache=true
+      - --cache-ttl=336h
+      - --cache-repo=europe-west3-docker.pkg.dev/$PROJECT_ID/sorginameiga/cache
+options:
+  machineType: E2_HIGHCPU_8
+timeout: 2400s

@@ -42,8 +42,25 @@ final class AnalyticsReports: Sendable {
                 orderBys: [.init(dimension: .init(dimensionName: "date"))]
             ), token: token, on: client))
 
+        // Monthly series for the last 12 months (also the source of the year total).
+        let monthly = Self.parseMonthly(try await runReport(
+            RunReportRequest(
+                dateRanges: [.init(startDate: "365daysAgo", endDate: "today")],
+                dimensions: [.init(name: "yearMonth")],
+                metrics: [.init(name: "sessions")],
+                orderBys: [.init(dimension: .init(dimensionName: "yearMonth"))]
+            ), token: token, on: client))
+
         let activeNow = Self.parseScalar(try await runRealtime(
             RunRealtimeRequest(metrics: [.init(name: "activeUsers")]), token: token, on: client))
+
+        // Countries: request the ISO code alongside the name so we can show a flag.
+        let countries = Self.parseCountries(try await runReport(RunReportRequest(
+            dateRanges: [.init(startDate: "30daysAgo", endDate: "today")],
+            dimensions: [.init(name: "country"), .init(name: "countryId")],
+            metrics: [.init(name: "sessions")],
+            orderBys: [.init(metric: .init(metricName: "sessions"), desc: true)],
+            limit: 6), token: token, on: client))
 
         func top(_ dimension: String, metric: String, limit: Int) async throws -> [LabelCount] {
             Self.parsePairs(try await runReport(RunReportRequest(
@@ -53,13 +70,14 @@ final class AnalyticsReports: Sendable {
                 orderBys: [.init(metric: .init(metricName: metric), desc: true)],
                 limit: limit), token: token, on: client))
         }
-        let topPages = try await top("pageTitle", metric: "screenPageViews", limit: 8)
-        let countries = try await top("country", metric: "sessions", limit: 6)
+        let channels = try await top("sessionDefaultChannelGroup", metric: "sessions", limit: 6)
+            .map { LabelCount(label: Self.prettyChannel($0.label), value: $0.value) }
         let devices = try await top("deviceCategory", metric: "sessions", limit: 4)
             .map { LabelCount(label: Self.prettyDevice($0.label), value: $0.value) }
 
-        let overview = Self.overview(daily: daily, today: Self.todayString(), activeNow: activeNow,
-                                     topPages: topPages, countries: countries, devices: devices)
+        let overview = Self.overview(daily: daily, monthly: monthly, today: Self.todayString(),
+                                     activeNow: activeNow, countries: countries,
+                                     channels: channels, devices: devices)
         await cache.store(overview)
         return overview
     }
@@ -111,6 +129,26 @@ final class AnalyticsReports: Sendable {
         }
     }
 
+    static func parseMonthly(_ resp: RunReportResponse) -> [MonthlyPoint] {
+        (resp.rows ?? []).compactMap { row in
+            guard let month = row.dimensionValues?.first?.value,
+                  let raw = row.metricValues?.first?.value, let value = Int(raw) else { return nil }
+            return MonthlyPoint(month: month, sessions: value)
+        }.sorted { $0.month < $1.month }
+    }
+
+    /// Rows of (country name, countryId, sessions) → a flag + Spanish name label.
+    static func parseCountries(_ resp: RunReportResponse) -> [LabelCount] {
+        (resp.rows ?? []).compactMap { row in
+            let dims = row.dimensionValues ?? []
+            guard dims.count >= 2,
+                  let raw = row.metricValues?.first?.value, let value = Int(raw) else { return nil }
+            let display = spanishCountry(dims[1].value) ?? dims[0].value
+            let flag = flagEmoji(dims[1].value)
+            return LabelCount(label: flag.isEmpty ? display : "\(flag) \(display)", value: value)
+        }
+    }
+
     static func prettyDevice(_ category: String) -> String {
         switch category.lowercased() {
         case "desktop": return "Escritorio"
@@ -120,18 +158,85 @@ final class AnalyticsReports: Sendable {
         }
     }
 
-    /// Builds the overview from the daily series. `today` is `yyyyMMdd` in the
-    /// property's timezone; if GA has no row for it yet (no visits), today = 0.
-    static func overview(daily: [DailyPoint], today: String, activeNow: Int,
-                         topPages: [LabelCount] = [], countries: [LabelCount] = [],
-                         devices: [LabelCount] = []) -> AnalyticsOverview {
+    /// GA4 default channel group → owner-friendly Spanish.
+    static func prettyChannel(_ channel: String) -> String {
+        switch channel.lowercased() {
+        case "organic search": return "Búsquedas en Google"
+        case "direct": return "Directo"
+        case "organic social", "social": return "Redes sociales"
+        case "referral": return "Enlaces de otras webs"
+        case "email": return "Correo electrónico"
+        case "paid search": return "Búsquedas de pago"
+        case "organic video", "video": return "Vídeo"
+        case "unassigned": return "Sin asignar"
+        default: return channel.capitalized
+        }
+    }
+
+    /// Regional-indicator flag emoji for a 2-letter ISO country code
+    /// ("ES" → 🇪🇸). Empty for missing/invalid codes ("(not set)", "ZZ").
+    static func flagEmoji(_ iso: String) -> String {
+        let code = iso.uppercased()
+        guard code.count == 2, code != "ZZ", code.allSatisfy({ $0.isASCII && $0.isLetter }) else { return "" }
+        var flag = ""
+        for scalar in code.unicodeScalars {
+            guard let indicator = Unicode.Scalar(0x1F1E6 - 65 + scalar.value) else { return "" }
+            flag.unicodeScalars.append(indicator)
+        }
+        return flag
+    }
+
+    /// Spanish name for the most likely visitor countries; nil → fall back to
+    /// GA's (English) country name.
+    static func spanishCountry(_ iso: String) -> String? {
+        switch iso.uppercased() {
+        case "ES": return "España"
+        case "US": return "Estados Unidos"
+        case "GB": return "Reino Unido"
+        case "FR": return "Francia"
+        case "DE": return "Alemania"
+        case "PT": return "Portugal"
+        case "IT": return "Italia"
+        case "MX": return "México"
+        case "AR": return "Argentina"
+        case "CO": return "Colombia"
+        case "CL": return "Chile"
+        case "PE": return "Perú"
+        case "VE": return "Venezuela"
+        case "BR": return "Brasil"
+        case "NL": return "Países Bajos"
+        case "BE": return "Bélgica"
+        case "IE": return "Irlanda"
+        case "CH": return "Suiza"
+        case "AT": return "Austria"
+        case "PL": return "Polonia"
+        case "SE": return "Suecia"
+        case "NO": return "Noruega"
+        case "DK": return "Dinamarca"
+        case "FI": return "Finlandia"
+        case "CA": return "Canadá"
+        case "AU": return "Australia"
+        case "MA": return "Marruecos"
+        case "AD": return "Andorra"
+        default: return nil
+        }
+    }
+
+    /// Builds the overview from the daily + monthly series. `today` is
+    /// `yyyyMMdd` in the property's timezone; if GA has no row for it yet (no
+    /// visits), today = 0. The year total is the sum of the monthly series.
+    static func overview(daily: [DailyPoint], monthly: [MonthlyPoint] = [], today: String,
+                         activeNow: Int, countries: [LabelCount] = [],
+                         channels: [LabelCount] = [], devices: [LabelCount] = []) -> AnalyticsOverview {
         AnalyticsOverview(
             daily: daily,
+            monthly: monthly,
             today: daily.first(where: { $0.date == today })?.sessions ?? 0,
             last7: daily.suffix(7).reduce(0) { $0 + $1.sessions },
             last30: daily.reduce(0) { $0 + $1.sessions },
+            lastYear: monthly.reduce(0) { $0 + $1.sessions },
             activeNow: activeNow,
-            topPages: topPages, countries: countries, devices: devices
+            countries: countries, channels: channels, devices: devices
         )
     }
 
@@ -152,6 +257,12 @@ struct DailyPoint: Encodable, Equatable {
     let sessions: Int
 }
 
+/// One month of the yearly series. `month` is `yyyyMM` (GA4 `yearMonth`).
+struct MonthlyPoint: Encodable, Equatable {
+    let month: String
+    let sessions: Int
+}
+
 /// A dimension value with its count (top pages, countries, devices).
 struct LabelCount: Encodable, Equatable {
     let label: String
@@ -160,12 +271,14 @@ struct LabelCount: Encodable, Equatable {
 
 struct AnalyticsOverview {
     let daily: [DailyPoint]
+    var monthly: [MonthlyPoint] = []
     let today: Int
     let last7: Int
     let last30: Int
+    var lastYear: Int = 0
     let activeNow: Int
-    var topPages: [LabelCount] = []
     var countries: [LabelCount] = []
+    var channels: [LabelCount] = []
     var devices: [LabelCount] = []
 }
 
